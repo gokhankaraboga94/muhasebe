@@ -963,17 +963,27 @@
                     <div class="grid">
                         <div class="stat-card">
                             <div class="stat-number" id="ibrahimPending">0</div>
-                            <div class="stat-label">Bekleyen Onay</div>
+                            <div class="stat-label">Bekleyen İşlem Onayı</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="ibrahimApproved">0</div>
-                            <div class="stat-label">Onaylananlar</div>
+                            <div class="stat-label">Onaylanan İşlem</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="ibrahimPendingInvoices">0</div>
+                            <div class="stat-label">Bekleyen Fatura</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="ibrahimApprovedInvoices">0</div>
+                            <div class="stat-label">Onaylanan Fatura</div>
                         </div>
                     </div>
 
                     <div class="tabs">
-                        <button class="tab active" onclick="switchTab('ibrahimPendingTab')">Bekleyen Onaylar</button>
-                        <button class="tab" onclick="switchTab('ibrahimApprovedTab')">Onaylananlar</button>
+                        <button class="tab active" onclick="switchTab('ibrahimPendingTab')">Bekleyen İşlemler</button>
+                        <button class="tab" onclick="switchTab('ibrahimApprovedTab')">Onaylanan İşlemler</button>
+                        <button class="tab" onclick="switchTab('ibrahimInvoicesPendingTab')">Bekleyen Faturalar</button>
+                        <button class="tab" onclick="switchTab('ibrahimInvoicesApprovedTab')">Onaylanan Faturalar</button>
                     </div>
 
                     <div id="ibrahimPendingTab" class="tab-content active">
@@ -1020,6 +1030,54 @@
                                             <th>Ödeme</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ibrahimInvoicesPendingTab" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Tüm Bekleyen Faturalar</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="ibrahimInvoicesPendingTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Tarih</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Oluşturan</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ibrahimInvoicesApprovedTab" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Tüm Onaylanan Faturalar</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="ibrahimInvoicesApprovedTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Tarih</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Oluşturan</th>
+                                            <th>Durum</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -1736,6 +1794,9 @@
         // Load İbrahim Data
         function loadIbrahimData() {
             const transactionsRef = dbRef(db, 'transactions');
+            const invoicesRef = dbRef(db, 'invoices');
+
+            // Load Transactions
             dbOnValue(transactionsRef, (snapshot) => {
                 const allTransactions = [];
                 const pendingTransactions = [];
@@ -1755,7 +1816,7 @@
                 document.getElementById('ibrahimPending').textContent = pendingTransactions.length;
                 document.getElementById('ibrahimApproved').textContent = approvedTransactions.length;
                 
-                // Bekleyen Onaylar
+                // Bekleyen İşlemler
                 const pendingTbody = document.querySelector('#ibrahimPendingTable tbody');
                 pendingTbody.innerHTML = '';
                 pendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
@@ -1776,7 +1837,7 @@
                     `;
                 });
 
-                // Onaylananlar
+                // Onaylanan İşlemler
                 const approvedTbody = document.querySelector('#ibrahimApprovedTable tbody');
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
@@ -1793,6 +1854,61 @@
                             <td>
                                 <button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button>
                             </td>
+                        </tr>
+                    `;
+                });
+            });
+
+            // Load Invoices
+            dbOnValue(invoicesRef, (snapshot) => {
+                const allInvoices = [];
+                const pendingInvoices = [];
+                const approvedInvoices = [];
+
+                snapshot.forEach((child) => {
+                    const invoice = { id: child.key, ...child.val() };
+                    allInvoices.push(invoice);
+                    
+                    if (invoice.status === 'Onay Bekliyor') {
+                        pendingInvoices.push(invoice);
+                    } else {
+                        approvedInvoices.push(invoice);
+                    }
+                });
+
+                document.getElementById('ibrahimPendingInvoices').textContent = pendingInvoices.length;
+                document.getElementById('ibrahimApprovedInvoices').textContent = approvedInvoices.length;
+                
+                // Bekleyen Faturalar
+                const pendingInvoicesTbody = document.querySelector('#ibrahimInvoicesPendingTable tbody');
+                pendingInvoicesTbody.innerHTML = '';
+                pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    pendingInvoicesTbody.innerHTML += `
+                        <tr>
+                            <td>${invoice.id.substring(0, 8)}</td>
+                            <td>${invoice.invoiceNumber}</td>
+                            <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
+                            <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td>${invoice.company}</td>
+                            <td>${invoice.createdBy}</td>
+                            <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
+                        </tr>
+                    `;
+                });
+
+                // Onaylanan Faturalar
+                const approvedInvoicesTbody = document.querySelector('#ibrahimInvoicesApprovedTable tbody');
+                approvedInvoicesTbody.innerHTML = '';
+                approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    approvedInvoicesTbody.innerHTML += `
+                        <tr>
+                            <td>${invoice.id.substring(0, 8)}</td>
+                            <td>${invoice.invoiceNumber}</td>
+                            <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
+                            <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td>${invoice.company}</td>
+                            <td>${invoice.createdBy}</td>
+                            <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                         </tr>
                     `;
                 });
