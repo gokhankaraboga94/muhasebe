@@ -558,6 +558,25 @@
         .cost-info strong {
             color: #92400e;
         }
+
+        .info-box {
+            background: #dbeafe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .info-box h4 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #1e40af;
+            font-size: 14px;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -649,7 +668,7 @@
                                             <th>Tarih</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
-                                            <th>Not/Maliyet</th>
+                                            <th>Not</th>
                                             <th>Oluşturan</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
@@ -787,7 +806,7 @@
                                         <option value="">Seçiniz</option>
                                         <option value="admin">Admin (Tüm Yetkilere Sahip)</option>
                                         <option value="selcuk">Fatura Oluşturma Yetkisi (Selçuk gibi)</option>
-                                        <option value="mehmet">İşlem Oluşturma Yetkisi (Mehmet gibi)</option>
+                                        <option value="mehmet">İşlem ve Fatura Oluşturma Yetkisi (Mehmet gibi)</option>
                                         <option value="ibrahim">1. Onay Yetkisi (İbrahim gibi)</option>
                                         <option value="mahmut">2. ve 3. Onay Yetkisi - Muhasebe (Mahmut gibi)</option>
                                     </select>
@@ -845,6 +864,13 @@
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">Yeni Fatura Oluştur</h2>
+                            </div>
+                            <div class="info-box">
+                                <h4>📋 Fatura Onay Akışı</h4>
+                                <p>Oluşturduğunuz faturalar şu adımlardan geçecektir:</p>
+                                <p><strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                                <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
+                                <strong>Sonuç:</strong> Onaylanan faturalar otomatik olarak "Onaylananlar" listesine eklenir.</p>
                             </div>
                             <form onsubmit="createInvoice(event)">
                                 <div class="row">
@@ -909,11 +935,13 @@
                     </div>
                 </div>
 
-                <!-- Mehmet Dashboard -->
+                <!-- Mehmet Dashboard - Güncellenmiş -->
                 <div id="mehmetDashboard" class="hidden">
                     <div class="tabs">
                         <button class="tab active" onclick="switchTab('createTransaction')">İşlem Oluştur</button>
                         <button class="tab" onclick="switchTab('myTransactions')">İşlemlerim</button>
+                        <button class="tab" onclick="switchTab('mehmetCreateInvoice')">Fatura Oluştur</button>
+                        <button class="tab" onclick="switchTab('mehmetMyInvoices')">Faturalarım</button>
                     </div>
 
                     <div id="createTransaction" class="tab-content active">
@@ -1000,6 +1028,80 @@
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
                                             <th>Not/Maliyet</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="mehmetCreateInvoice" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Yeni Fatura Oluştur</h2>
+                            </div>
+                            <div class="info-box">
+                                <h4>📋 Fatura Onay Akışı</h4>
+                                <p>Oluşturduğunuz faturalar şu adımlardan geçecektir:</p>
+                                <p><strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                                <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
+                                <strong>Sonuç:</strong> Onaylanan faturalar otomatik olarak "Onaylananlar" listesine eklenir.</p>
+                            </div>
+                            <form onsubmit="createInvoiceMehmet(event)">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label>Fatura Numarası *</label>
+                                            <input type="text" id="mehmetInvoiceNumber" required>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label>Fatura Tarihi *</label>
+                                            <input type="date" id="mehmetInvoiceDate" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label>Tutar (₺) *</label>
+                                            <input type="number" step="0.01" id="mehmetInvoiceAmount" required>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label>Firma Bilgisi *</label>
+                                            <input type="text" id="mehmetCompanyInfo" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Not</label>
+                                    <textarea id="mehmetInvoiceNote"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Fatura Oluştur</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="mehmetMyInvoices" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Oluşturduğum Faturalar</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="mehmetInvoicesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Tarih</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Not</th>
                                             <th>Durum</th>
                                         </tr>
                                     </thead>
@@ -1095,7 +1197,7 @@
                     <div id="ibrahimInvoicesPendingTab" class="tab-content">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Tüm Bekleyen Faturalar</h2>
+                                <h2 class="card-title">1. Onay Bekleyen Faturalar</h2>
                             </div>
                             <div class="table-container">
                                 <table id="ibrahimInvoicesPendingTable">
@@ -1109,6 +1211,7 @@
                                             <th>Not</th>
                                             <th>Oluşturan</th>
                                             <th>Durum</th>
+                                            <th>İşlemler</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -1120,7 +1223,7 @@
                     <div id="ibrahimInvoicesApprovedTab" class="tab-content">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Tüm Onaylanan Faturalar</h2>
+                                <h2 class="card-title">1. Onayı Verdiğim Faturalar</h2>
                             </div>
                             <div class="table-container">
                                 <table id="ibrahimInvoicesApprovedTable">
@@ -1188,6 +1291,7 @@
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
+                                            <th>Oluşturan</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1255,7 +1359,7 @@
                     <div id="approvedInvoices" class="tab-content">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Onayladığım Faturalar</h2>
+                                <h2 class="card-title">2. Onayı Verdiğim Faturalar</h2>
                             </div>
                             <div class="table-container">
                                 <table id="mahmutInvoicesApprovedTable">
@@ -1267,6 +1371,7 @@
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
+                                            <th>Oluşturan</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1374,12 +1479,10 @@
             'ibrahim@mobilfon.com': 'ibrahim'
         };
 
-        // Generate 6-digit numeric ID
         function generateSixDigitId() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
 
-        // Initialize default options
         async function initializeDefaults() {
             const statusRef = dbRef(db, 'statusOptions');
             const serviceRef = dbRef(db, 'serviceTypes');
@@ -1574,7 +1677,7 @@
             const roleNames = {
                 'admin': 'Genel Admin',
                 'selcuk': 'Fatura Oluşturma',
-                'mehmet': 'İşlem Oluşturma',
+                'mehmet': 'İşlem ve Fatura Oluşturma',
                 'mahmut': 'Muhasebe 2. ve 3. Onay',
                 'ibrahim': '1. Onay'
             };
@@ -1654,6 +1757,36 @@
             loadSelcukData();
         };
 
+        window.createInvoiceMehmet = async function(event) {
+            event.preventDefault();
+            
+            const sixDigitId = generateSixDigitId();
+            
+            const invoiceData = {
+                customId: sixDigitId,
+                invoiceNumber: document.getElementById('mehmetInvoiceNumber').value,
+                invoiceDate: document.getElementById('mehmetInvoiceDate').value,
+                amount: parseFloat(document.getElementById('mehmetInvoiceAmount').value),
+                company: document.getElementById('mehmetCompanyInfo').value,
+                note: document.getElementById('mehmetInvoiceNote').value,
+                status: '1. Onay Bekliyor',
+                approvalStage: 1,
+                createdBy: currentUser.email,
+                createdAt: new Date().toISOString(),
+                timestamp: Date.now()
+            };
+
+            const invoicesRef = dbRef(db, 'invoices');
+            const newInvoiceRef = dbPush(invoicesRef);
+            await dbSet(newInvoiceRef, invoiceData);
+            
+            await addLog(currentUser.email, 'Fatura Oluşturdu', `ID: ${sixDigitId}, Fatura No: ${invoiceData.invoiceNumber}`);
+            
+            alert(`Fatura başarıyla oluşturuldu! ID: ${sixDigitId}`);
+            event.target.reset();
+            loadMehmetData();
+        };
+
         window.createTransaction = async function(event) {
             event.preventDefault();
             
@@ -1694,20 +1827,38 @@
             loadMehmetData();
         };
 
-        window.approveInvoice = async function(invoiceId) {
+        window.approveInvoice1 = async function(invoiceId) {
+            const invoiceRef = dbRef(db, `invoices/${invoiceId}`);
+            const snapshot = await dbGet(invoiceRef);
+            const invoice = snapshot.val();
+            
+            await dbUpdate(invoiceRef, {
+                status: '2. Onay Bekliyor',
+                approvalStage: 2,
+                firstApprovedBy: currentUser.email,
+                firstApprovedAt: new Date().toISOString()
+            });
+            
+            await addLog(currentUser.email, 'Fatura 1. Onayladı', `ID: ${invoice.customId}`);
+            alert('Fatura 1. onay verildi! 2. Onay bekleniyor.');
+            loadIbrahimData();
+        };
+
+        window.approveInvoice2 = async function(invoiceId) {
             const invoiceRef = dbRef(db, `invoices/${invoiceId}`);
             const snapshot = await dbGet(invoiceRef);
             const invoice = snapshot.val();
             
             await dbUpdate(invoiceRef, {
                 status: 'Onaylandı',
-                approvalStage: 2,
+                approvalStage: 3,
                 secondApprovedBy: currentUser.email,
-                secondApprovedAt: new Date().toISOString()
+                secondApprovedAt: new Date().toISOString(),
+                completedAt: new Date().toISOString()
             });
             
-            await addLog(currentUser.email, 'Fatura 2. Onayladı', `ID: ${invoice.customId}`);
-            alert('Fatura 2. onay verildi!');
+            await addLog(currentUser.email, 'Fatura 2. Onayladı - Tamamlandı', `ID: ${invoice.customId}`);
+            alert('Fatura 2. onay verildi! Fatura onaylandı ve tamamlandı.');
             loadMahmutData();
         };
 
@@ -1852,7 +2003,6 @@
                     `;
                 });
 
-                // Maliyet Ödenecekler
                 const costPendingTbody = document.querySelector('#adminCostPendingTable tbody');
                 costPendingTbody.innerHTML = '';
                 const costPending = transactions.filter(t => t.status === 'Maliyet Onayı Bekliyor');
@@ -1871,7 +2021,6 @@
                     `;
                 });
 
-                // Maliyet Ödenenler
                 const costPaidTbody = document.querySelector('#adminCostPaidTable tbody');
                 costPaidTbody.innerHTML = '';
                 const costPaid = transactions.filter(t => t.status === 'Tamamlandı - Maliyet Ödendi');
@@ -1948,6 +2097,8 @@
 
         function loadMehmetData() {
             const transactionsRef = dbRef(db, 'transactions');
+            const invoicesRef = dbRef(db, 'invoices');
+
             dbOnValue(transactionsRef, (snapshot) => {
                 const transactions = [];
                 snapshot.forEach((child) => {
@@ -1971,6 +2122,32 @@
                             <td>${transaction.paymentMethod}</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
+                        </tr>
+                    `;
+                });
+            });
+
+            dbOnValue(invoicesRef, (snapshot) => {
+                const invoices = [];
+                snapshot.forEach((child) => {
+                    const invoice = child.val();
+                    if (invoice.createdBy === currentUser.email) {
+                        invoices.push({ id: child.key, ...invoice });
+                    }
+                });
+                
+                const tbody = document.querySelector('#mehmetInvoicesTable tbody');
+                tbody.innerHTML = '';
+                invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
+                            <td>${invoice.invoiceNumber}</td>
+                            <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
+                            <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
+                            <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                         </tr>
                     `;
                 });
@@ -2054,7 +2231,7 @@
                     
                     if (invoice.status === '1. Onay Bekliyor') {
                         pendingInvoices.push(invoice);
-                    } else {
+                    } else if (invoice.firstApprovedBy === currentUser.email) {
                         approvedInvoices.push(invoice);
                     }
                 });
@@ -2075,6 +2252,9 @@
                             <td>${invoice.note || '-'}</td>
                             <td>${invoice.createdBy}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
+                            <td>
+                                <button class="action-btn btn-success" onclick="approveInvoice1('${invoice.id}')">1. Onay Ver</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -2111,7 +2291,7 @@
                     const invoice = { id: child.key, ...child.val() };
                     allInvoices.push(invoice);
                     
-                    if (invoice.status === '1. Onay Bekliyor') {
+                    if (invoice.status === '2. Onay Bekliyor') {
                         pendingInvoices.push(invoice);
                     } else if (invoice.secondApprovedBy === currentUser.email) {
                         approvedInvoices.push(invoice);
@@ -2131,10 +2311,11 @@
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${invoice.company}</td>
                             <td>${invoice.note || '-'}</td>
+                            <td>${invoice.createdBy}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                             <td>
                                 <div class="action-buttons">
-                                    <button class="action-btn btn-success" onclick="approveInvoice('${invoice.id}')">2. Onayla</button>
+                                    <button class="action-btn btn-success" onclick="approveInvoice2('${invoice.id}')">2. Onayla</button>
                                     <button class="action-btn btn-danger" onclick="deleteRecord('invoices', '${invoice.id}')">Sil</button>
                                 </div>
                             </td>
@@ -2153,6 +2334,7 @@
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${invoice.company}</td>
                             <td>${invoice.note || '-'}</td>
+                            <td>${invoice.createdBy}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                             <td>
                                 <button class="action-btn btn-danger" onclick="deleteRecord('invoices', '${invoice.id}')">Sil</button>
@@ -2188,7 +2370,6 @@
                 document.getElementById('mahmutCostPending').textContent = costPendingTransactions.length;
                 document.getElementById('mahmutCostPaid').textContent = costPaidTransactions.length;
                 
-                // 2. Onay Bekleyenler
                 const pendingTbody = document.querySelector('#mahmutTransactionsPendingTable tbody');
                 pendingTbody.innerHTML = '';
                 pendingTransactions2.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
@@ -2213,7 +2394,6 @@
                     `;
                 });
 
-                // Maliyet Onayı Bekleyenler (3. Onay)
                 const costPendingTbody = document.querySelector('#mahmutCostPendingTable tbody');
                 costPendingTbody.innerHTML = '';
                 costPendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
@@ -2236,7 +2416,6 @@
                     `;
                 });
 
-                // 2. Onayı Verilenler
                 const approvedTbody = document.querySelector('#mahmutTransactionsApprovedTable tbody');
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
@@ -2258,7 +2437,6 @@
                     `;
                 });
 
-                // Maliyet Ödenenler
                 const costPaidTbody = document.querySelector('#mahmutCostPaidTable tbody');
                 costPaidTbody.innerHTML = '';
                 costPaidTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
@@ -2438,10 +2616,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-                            
