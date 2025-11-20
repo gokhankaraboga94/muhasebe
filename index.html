@@ -379,6 +379,12 @@
             color: #065f46;
         }
 
+        .badge-linked {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #16a34a;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -578,6 +584,32 @@
             line-height: 1.6;
         }
 
+        .info-box-warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .info-box-warning h4 {
+            color: #92400e;
+        }
+
+        .info-box-warning p {
+            color: #92400e;
+        }
+
+        .info-box-success {
+            background: #dcfce7;
+            border-left: 4px solid #16a34a;
+        }
+
+        .info-box-success h4 {
+            color: #166534;
+        }
+
+        .info-box-success p {
+            color: #166534;
+        }
+
         /* Modal Styles */
         .modal {
             display: none;
@@ -647,6 +679,19 @@
                 transform: translateY(0);
                 opacity: 1;
             }
+        }
+
+        .linked-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            background: #dcfce7;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #166534;
+            font-weight: 600;
+            margin-left: 8px;
         }
     </style>
 </head>
@@ -1148,6 +1193,17 @@
                                 <strong>Sonuç:</strong> Onaylanan faturalar otomatik olarak "Onaylananlar" listesine eklenir.</p>
                                 <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> İbrahim onaylamadan önce faturalarınızı düzenleyebilirsiniz.</p>
                             </div>
+                            <div class="info-box info-box-success">
+                                <h4>🔗 İşlem-Fatura Eşleştirme</h4>
+                                <p><strong>İsteğe Bağlı Özellik:</strong> Eğer bu faturayı daha önce oluşturduğunuz bir işlemle ilişkilendirmek istiyorsanız:</p>
+                                <p>• <strong>NOT alanına işlem ID'sini</strong> (örn: 123456) yazın<br>
+                                • Sistem otomatik olarak o işlemi bulup faturayı aynı ID ile oluşturacak<br>
+                                • İşlem-Fatura bağlantısı otomatik kurulacak</p>
+                                <p style="margin-top: 10px; color: #16a34a;"><strong>✓ Avantajlar:</strong></p>
+                                <p>• Tek ID ile işlem ve faturayı takip edin<br>
+                                • Muhasebe ve onay süreçlerinde kolayca eşleştirin<br>
+                                • Manuel eşleştirme hatalarını önleyin</p>
+                            </div>
                             <form onsubmit="createInvoiceMehmet(event)">
                                 <div class="row">
                                     <div class="col">
@@ -1178,8 +1234,11 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Not</label>
-                                    <textarea id="mehmetInvoiceNote"></textarea>
+                                    <label>Not (İşlem ID'si için - İsteğe Bağlı) 🔗</label>
+                                    <textarea id="mehmetInvoiceNote" placeholder="Bu faturayı bir işlemle ilişkilendirmek için işlem ID'sini buraya yazın (örn: 123456). Boş bırakırsanız otomatik ID oluşturulur."></textarea>
+                                    <small style="color: #16a34a; display: block; margin-top: 5px;">
+                                        💡 İpucu: İşlemlerim sekmesinden ID numarasını kopyalayabilirsiniz.
+                                    </small>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Fatura Oluştur</button>
                             </form>
@@ -2164,29 +2223,90 @@
         window.createInvoiceMehmet = async function(event) {
             event.preventDefault();
             
-            const sixDigitId = generateSixDigitId();
+            const noteValue = document.getElementById('mehmetInvoiceNote').value.trim();
+            let finalInvoiceId = generateSixDigitId();
+            let linkedTransactionId = null;
+            
+            // NOT alanında ID var mı kontrol et
+            if (noteValue) {
+                // NOT alanındaki ID'yi kontrol et (sadece rakamlardan oluşan 6 haneli bir değer mi?)
+                const potentialId = noteValue.match(/\b\d{6}\b/);
+                
+                if (potentialId) {
+                    const searchId = potentialId[0];
+                    
+                    // Bu ID'ye sahip bir işlem var mı kontrol et
+                    const transactionsRef = dbRef(db, 'transactions');
+                    const snapshot = await dbGet(transactionsRef);
+                    
+                    let foundTransaction = null;
+                    if (snapshot.exists()) {
+                        const transactions = snapshot.val();
+                        for (let transId in transactions) {
+                            if (transactions[transId].customId === searchId) {
+                                foundTransaction = { id: transId, ...transactions[transId] };
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (foundTransaction) {
+                        // İşlem bulundu - Fatura ID'sini işlem ID'si ile eşleştir
+                        finalInvoiceId = searchId;
+                        linkedTransactionId = foundTransaction.id;
+                        
+                        // İşlemi fatura ile ilişkilendir
+                        const transactionRef = dbRef(db, `transactions/${linkedTransactionId}`);
+                        await dbUpdate(transactionRef, {
+                            linkedInvoiceId: finalInvoiceId,
+                            linkedInvoiceAt: new Date().toISOString()
+                        });
+                    } else {
+                        // İşlem bulunamaTamam, sadece kodun devamını veriyorum:
+
+
+                        // İşlem bulunamadı - Kullanıcıyı uyar
+                        alert(`⚠️ UYARI: Girilen ID (${searchId}) sistemde bir işlem ile eşleşmedi.\n\nİşlem-Fatura eşleştirmesi yapmak istiyorsanız:\n1. Önce işlem ID'sini kontrol edin\n2. Doğru ID'yi NOT alanına girin\n\nDevam etmek için "Tamam"a basın - fatura normal ID ile oluşturulacak.`);
+                        // Kullanıcı devam etmek isterse normal akış ile devam et
+                    }
+                }
+            }
             
             const invoiceData = {
-                customId: sixDigitId,
+                customId: finalInvoiceId,
                 invoiceNumber: document.getElementById('mehmetInvoiceNumber').value,
                 invoiceDate: document.getElementById('mehmetInvoiceDate').value,
                 amount: parseFloat(document.getElementById('mehmetInvoiceAmount').value),
                 company: document.getElementById('mehmetCompanyInfo').value,
-                note: document.getElementById('mehmetInvoiceNote').value,
+                note: noteValue,
                 status: '1. Onay Bekliyor',
                 approvalStage: 1,
                 createdBy: currentUser.email,
                 createdAt: new Date().toISOString(),
                 timestamp: Date.now()
             };
+            
+            // Eğer işlem eşleştirmesi yapıldıysa, bunu kaydet
+            if (linkedTransactionId) {
+                invoiceData.linkedTransactionId = linkedTransactionId;
+                invoiceData.linkedTransactionCustomId = finalInvoiceId;
+            }
 
             const invoicesRef = dbRef(db, 'invoices');
             const newInvoiceRef = dbPush(invoicesRef);
             await dbSet(newInvoiceRef, invoiceData);
             
-            await addLog(currentUser.email, 'Fatura Oluşturdu', `ID: ${sixDigitId}, Fatura No: ${invoiceData.invoiceNumber}`);
+            const logMessage = linkedTransactionId 
+                ? `ID: ${finalInvoiceId}, Fatura No: ${invoiceData.invoiceNumber} (İşlem ${finalInvoiceId} ile eşleştirildi)`
+                : `ID: ${finalInvoiceId}, Fatura No: ${invoiceData.invoiceNumber}`;
             
-            alert(`Fatura başarıyla oluşturuldu! ID: ${sixDigitId}`);
+            await addLog(currentUser.email, 'Fatura Oluşturdu', logMessage);
+            
+            const successMessage = linkedTransactionId
+                ? `✅ Fatura başarıyla oluşturuldu!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`
+                : `✅ Fatura başarıyla oluşturuldu!\n\nFatura ID: ${finalInvoiceId}`;
+            
+            alert(successMessage);
             event.target.reset();
             loadMehmetData();
         };
@@ -2388,9 +2508,10 @@
                 const tbody = document.querySelector('#adminInvoicesTable tbody');
                 tbody.innerHTML = '';
                 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2427,9 +2548,10 @@
                 tbody.innerHTML = '';
                 transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.tcNumber || '-'}</td>
@@ -2526,9 +2648,10 @@
                 tbody.innerHTML = '';
                 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     const canEdit = invoice.status === '1. Onay Bekliyor';
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2562,9 +2685,10 @@
                 transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                     const canEdit = transaction.status === '1. Onay Bekliyor';
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.tcNumber || '-'}</td>
@@ -2596,9 +2720,10 @@
                 tbody.innerHTML = '';
                 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     const canEdit = invoice.status === '1. Onay Bekliyor';
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2641,9 +2766,10 @@
                 pendingTbody.innerHTML = '';
                 pendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                     pendingTbody.innerHTML += `
                         <tr>
-                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.tcNumber || '-'}</td>
@@ -2665,9 +2791,10 @@
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                     approvedTbody.innerHTML += `
                         <tr>
-                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.tcNumber || '-'}</td>
@@ -2708,9 +2835,10 @@
                 const pendingInvoicesTbody = document.querySelector('#ibrahimInvoicesPendingTable tbody');
                 pendingInvoicesTbody.innerHTML = '';
                 pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
                     pendingInvoicesTbody.innerHTML += `
                         <tr>
-                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2728,9 +2856,10 @@
                 const approvedInvoicesTbody = document.querySelector('#ibrahimInvoicesApprovedTable tbody');
                 approvedInvoicesTbody.innerHTML = '';
                 approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
                     approvedInvoicesTbody.innerHTML += `
                         <tr>
-                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2769,9 +2898,10 @@
                 const pendingTbody = document.querySelector('#mahmutInvoicesPendingTable tbody');
                 pendingTbody.innerHTML = '';
                 pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
                     pendingTbody.innerHTML += `
                         <tr>
-                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2792,9 +2922,10 @@
                 const approvedTbody = document.querySelector('#mahmutInvoicesApprovedTable tbody');
                 approvedTbody.innerHTML = '';
                 approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
                     approvedTbody.innerHTML += `
                         <tr>
-                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2840,9 +2971,10 @@
                 pendingTbody.innerHTML = '';
                 pendingTransactions2.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                     pendingTbody.innerHTML += `
                         <tr>
-                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.tcNumber || '-'}</td>
@@ -2866,9 +2998,10 @@
                 const costPendingTbody = document.querySelector('#mahmutCostPendingTable tbody');
                 costPendingTbody.innerHTML = '';
                 costPendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                     costPendingTbody.innerHTML += `
                         <tr>
-                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.tcNumber || '-'}</td>
@@ -2890,9 +3023,10 @@
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                     approvedTbody.innerHTML += `
                         <tr>
-                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.tcNumber || '-'}</td>
@@ -2913,9 +3047,10 @@
                 const costPaidTbody = document.querySelector('#mahmutCostPaidTable tbody');
                 costPaidTbody.innerHTML = '';
                 costPaidTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                     costPaidTbody.innerHTML += `
                         <tr>
-                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.tcNumber || '-'}</td>
