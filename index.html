@@ -929,6 +929,8 @@
                                         <option value="mehmet">İşlem ve Fatura Oluşturma Yetkisi (Mehmet gibi)</option>
                                         <option value="ibrahim">1. Onay Yetkisi (İbrahim gibi)</option>
                                         <option value="mahmut">2. ve 3. Onay Yetkisi - Muhasebe (Mahmut gibi)</option>
+                                       <option value="viewer">Görüntüleyici (Samil)</option>
+                                        <option value="viewer">Sadece Görüntüleyici (Salt Okunur)</option>
                                     </select>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Kullanıcı Oluştur</button>
@@ -972,6 +974,149 @@
                         </div>
                     </div>
                 </div>
+
+
+
+                <div id="viewerDashboard" class="hidden">
+    <div class="grid">
+        <div class="stat-card">
+            <div class="stat-number" id="viewerTotalInvoices">0</div>
+            <div class="stat-label">Toplam Fatura</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="viewerTotalTransactions">0</div>
+            <div class="stat-label">Toplam İşlem</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="viewerPendingApprovals">0</div>
+            <div class="stat-label">Bekleyen Onay</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="viewerCompletedToday">0</div>
+            <div class="stat-label">Bugün Tamamlanan</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('viewerInvoices')">Tüm Faturalar</button>
+        <button class="tab" onclick="switchTab('viewerTransactions')">Tüm İşlemler</button>
+        <button class="tab" onclick="switchTab('viewerCostPending')">Maliyet Bekleyenler</button>
+        <button class="tab" onclick="switchTab('viewerCostPaid')">Maliyet Ödenenler</button>
+    </div>
+
+    <div id="viewerInvoices" class="tab-content active">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Tüm Faturalar - Salt Okunur</h2>
+            </div>
+            <div class="info-box info-box-warning">
+                <h4>👁️ Salt Okunur Erişim</h4>
+            </div>
+            <div class="table-container">
+                <table id="viewerInvoicesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fatura No</th>
+                            <th>Fatura Tarihi</th>
+                            <th>Tutar</th>
+                            <th>Firma</th>
+                            <th>Not</th>
+                            <th>Oluşturan</th>
+                            <th>Durum</th>
+                            <th>Son Güncelleme</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewerTransactions" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Tüm İşlemler - Salt Okunur</h2>
+            </div>
+            <div class="table-container">
+                <table id="viewerTransactionsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ad Soyad</th>
+                            <th>IMEI</th>
+                            <th>TC No</th>
+                            <th>Marka Model</th>
+                            <th>Servis Türü</th>
+                            <th>Tutar</th>
+                            <th>Ödeme</th>
+                            <th>Ödeme Tarihi</th>
+                            <th>Not/Maliyet</th>
+                            <th>Oluşturan</th>
+                            <th>Durum</th>
+                            <th>Son Güncelleme</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewerCostPending" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Maliyet Ödenmeyi Bekleyenler - Salt Okunur</h2>
+            </div>
+            <div class="table-container">
+                <table id="viewerCostPendingTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ad Soyad</th>
+                            <th>IMEI</th>
+                            <th>TC No</th>
+                            <th>Marka Model</th>
+                            <th>Servis Türü</th>
+                            <th>Tutar</th>
+                            <th>Not/Maliyet</th>
+                            <th>Durum</th>
+                            <th>2. Onay Tarihi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewerCostPaid" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Maliyet Ödenenler - Salt Okunur</h2>
+            </div>
+            <div class="table-container">
+                <table id="viewerCostPaidTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ad Soyad</th>
+                            <th>IMEI</th>
+                            <th>TC No</th>
+                            <th>Marka Model</th>
+                            <th>Servis Türü</th>
+                            <th>Tutar</th>
+                            <th>Not/Maliyet</th>
+                            <th>Durum</th>
+                            <th>3. Onay Tarihi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
                 <!-- Selçuk Dashboard -->
                 <div id="selcukDashboard" class="hidden">
@@ -1792,7 +1937,8 @@
             'selcuk@mobilfon.com': 'selcuk',
             'mehmet@mobilfon.com': 'mehmet',
             'muhasebe@mobilfon.com': 'mahmut',
-            'ibrahim@mobilfon.com': 'ibrahim'
+            'ibrahim@mobilfon.com': 'ibrahim',
+            'samil@mobilfon.com': 'viewer'
         };
 
         function generateSixDigitId() {
@@ -2142,42 +2288,48 @@
                 'selcuk': 'Fatura Oluşturma',
                 'mehmet': 'İşlem ve Fatura Oluşturma',
                 'mahmut': 'Muhasebe 2. ve 3. Onay',
-                'ibrahim': '1. Onay'
+                'ibrahim': '1. Onay',
+                'viewer': 'Sadece Görüntüleyici'  // YENİ EKLENEN
             };
             return roleNames[role] || role;
         }
 
-        function showDashboard(role) {
-            ['adminDashboard', 'selcukDashboard', 'mehmetDashboard', 'mahmutDashboard', 'ibrahimDashboard'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
+       function showDashboard(role) {
+    ['adminDashboard', 'selcukDashboard', 'mehmetDashboard', 'mahmutDashboard', 'ibrahimDashboard', 'viewerDashboard'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+    });
 
-            switch(role) {
-                case 'admin':
-                    document.getElementById('adminDashboard').classList.remove('hidden');
-                    loadAdminData();
-                    loadUsers();
-                    break;
-                case 'selcuk':
-                    document.getElementById('selcukDashboard').classList.remove('hidden');
-                    loadSelcukData();
-                    break;
-                case 'mehmet':
-                    document.getElementById('mehmetDashboard').classList.remove('hidden');
-                    loadMehmetData();
-                    loadStatusOptions();
-                    loadServiceTypes();
-                    break;
-                case 'mahmut':
-                    document.getElementById('mahmutDashboard').classList.remove('hidden');
-                    loadMahmutData();
-                    break;
-                case 'ibrahim':
-                    document.getElementById('ibrahimDashboard').classList.remove('hidden');
-                    loadIbrahimData();
-                    break;
-            }
-        }
+    switch(role) {
+        case 'admin':
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            loadAdminData();
+            loadUsers();
+            break;
+        case 'selcuk':
+            document.getElementById('selcukDashboard').classList.remove('hidden');
+            loadSelcukData();
+            break;
+        case 'mehmet':
+            document.getElementById('mehmetDashboard').classList.remove('hidden');
+            loadMehmetData();
+            loadStatusOptions();
+            loadServiceTypes();
+            break;
+        case 'mahmut':
+            document.getElementById('mahmutDashboard').classList.remove('hidden');
+            loadMahmutData();
+            break;
+        case 'ibrahim':
+            document.getElementById('ibrahimDashboard').classList.remove('hidden');
+            loadIbrahimData();
+            break;
+        case 'viewer':  // YENİ EKLENEN
+            document.getElementById('viewerDashboard').classList.remove('hidden');
+            loadViewerData();
+            break;
+    }
+}
+
 
         async function addLog(userId, action, details) {
             const logsRef = dbRef(db, 'logs');
@@ -3066,6 +3218,139 @@
             });
         }
 
+
+        function loadViewerData() {
+    const invoicesRef = dbRef(db, 'invoices');
+    const transactionsRef = dbRef(db, 'transactions');
+
+    dbOnValue(invoicesRef, (snapshot) => {
+        const invoices = [];
+        snapshot.forEach((child) => {
+            invoices.push({ id: child.key, ...child.val() });
+        });
+        
+        document.getElementById('viewerTotalInvoices').textContent = invoices.length;
+        
+        const tbody = document.querySelector('#viewerInvoicesTable tbody');
+        tbody.innerHTML = '';
+        invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+            const lastEdited = invoice.lastEditedAt ? new Date(invoice.lastEditedAt).toLocaleString('tr-TR') : 
+                              invoice.createdAt ? new Date(invoice.createdAt).toLocaleString('tr-TR') : '-';
+            const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                    <td>${invoice.invoiceNumber}</td>
+                    <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
+                    <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
+                    <td>${invoice.company}</td>
+                    <td>${invoice.note || '-'}</td>
+                    <td>${invoice.createdBy}</td>
+                    <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
+                    <td>${lastEdited}</td>
+                </tr>
+            `;
+        });
+    });
+
+    dbOnValue(transactionsRef, (snapshot) => {
+        const transactions = [];
+        snapshot.forEach((child) => {
+            transactions.push({ id: child.key, ...child.val() });
+        });
+        
+        document.getElementById('viewerTotalTransactions').textContent = transactions.length;
+        
+        const pending = transactions.filter(t => t.status.includes('Bekliyor')).length;
+        document.getElementById('viewerPendingApprovals').textContent = pending;
+        
+        const today = new Date().toDateString();
+        const completedToday = transactions.filter(t => 
+            t.status.includes('Tamamlandı') && 
+            t.completedAt &&
+            new Date(t.completedAt).toDateString() === today
+        ).length;
+        document.getElementById('viewerCompletedToday').textContent = completedToday;
+        
+        // Tüm İşlemler Tablosu
+        const tbody = document.querySelector('#viewerTransactionsTable tbody');
+        tbody.innerHTML = '';
+        transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+            const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
+            const lastEdited = transaction.lastEditedAt ? new Date(transaction.lastEditedAt).toLocaleString('tr-TR') : 
+                              transaction.createdAt ? new Date(transaction.createdAt).toLocaleString('tr-TR') : '-';
+            const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                    <td>${transaction.customerName}</td>
+                    <td>${transaction.imeiNumber}</td>
+                    <td>${transaction.tcNumber || '-'}</td>
+                    <td>${transaction.brandModel}</td>
+                    <td>${transaction.serviceType || '-'}</td>
+                    <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                    <td>${transaction.paymentMethod}</td>
+                    <td>${paymentDate}</td>
+                    <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                    <td>${transaction.createdBy}</td>
+                    <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
+                    <td>${lastEdited}</td>
+                </tr>
+            `;
+        });
+
+        // Maliyet Bekleyenler Tablosu
+        const costPendingTbody = document.querySelector('#viewerCostPendingTable tbody');
+        costPendingTbody.innerHTML = '';
+        const costPending = transactions.filter(t => t.status === 'Maliyet Onayı Bekliyor');
+        costPending.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+            const secondApprovalDate = transaction.secondApprovedAt ? new Date(transaction.secondApprovedAt).toLocaleString('tr-TR') : '-';
+            const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+            
+            costPendingTbody.innerHTML += `
+                <tr>
+                    <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                    <td>${transaction.customerName}</td>
+                    <td>${transaction.imeiNumber}</td>
+                    <td>${transaction.tcNumber || '-'}</td>
+                    <td>${transaction.brandModel}</td>
+                    <td>${transaction.serviceType || '-'}</td>
+                    <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                    <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                    <td><span class="badge badge-cost-pending">${transaction.status}</span></td>
+                    <td>${secondApprovalDate}</td>
+                </tr>
+            `;
+        });
+
+        // Maliyet Ödenenler Tablosu
+        const costPaidTbody = document.querySelector('#viewerCostPaidTable tbody');
+        costPaidTbody.innerHTML = '';
+        const costPaid = transactions.filter(t => t.status === 'Tamamlandı - Maliyet Ödendi');
+        costPaid.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+            const thirdApprovalDate = transaction.thirdApprovedAt ? new Date(transaction.thirdApprovedAt).toLocaleString('tr-TR') : '-';
+            const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+            
+            costPaidTbody.innerHTML += `
+                <tr>
+                    <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                    <td>${transaction.customerName}</td>
+                    <td>${transaction.imeiNumber}</td>
+                    <td>${transaction.tcNumber || '-'}</td>
+                    <td>${transaction.brandModel}</td>
+                    <td>${transaction.serviceType || '-'}</td>
+                    <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                    <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                    <td><span class="badge badge-cost-paid">${transaction.status}</span></td>
+                    <td>${thirdApprovalDate}</td>
+                </tr>
+            `;
+        });
+    });
+}
+
         function loadStatusOptions() {
             const statusRef = dbRef(db, 'statusOptions');
             dbOnValue(statusRef, (snapshot) => {
@@ -3230,6 +3515,11 @@
                 });
             }
         });
+
+        
+
+
+
     </script>
 </body>
 </html>
