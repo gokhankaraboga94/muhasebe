@@ -314,6 +314,7 @@
             font-weight: 600;
             color: var(--dark);
             border-bottom: 2px solid var(--border);
+            white-space: nowrap;
         }
 
         td {
@@ -366,6 +367,16 @@
         .badge-user {
             background: #dbeafe;
             color: #1e40af;
+        }
+
+        .badge-cost-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-cost-paid {
+            background: #d1fae5;
+            color: #065f46;
         }
 
         .grid {
@@ -425,6 +436,7 @@
         .action-buttons {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .action-btn {
@@ -445,29 +457,6 @@
 
         .col {
             flex: 1;
-        }
-
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-
-        .checkbox-item label {
-            margin: 0;
-            font-weight: 400;
         }
 
         @media (max-width: 768px) {
@@ -557,6 +546,18 @@
             padding: 6px 12px;
             width: auto;
         }
+
+        .cost-info {
+            background: #fef3c7;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .cost-info strong {
+            color: #92400e;
+        }
     </style>
 </head>
 <body>
@@ -627,6 +628,8 @@
                     <div class="tabs">
                         <button class="tab active" onclick="switchTab('adminInvoices')">Faturalar</button>
                         <button class="tab" onclick="switchTab('adminTransactions')">İşlemler</button>
+                        <button class="tab" onclick="switchTab('adminCostPending')">Maliyet Ödenecekler</button>
+                        <button class="tab" onclick="switchTab('adminCostPaid')">Maliyet Ödenenler</button>
                         <button class="tab" onclick="switchTab('adminLogs')">Sistem Logları</button>
                         <button class="tab" onclick="switchTab('adminUsers')">Kullanıcı Yönetimi</button>
                         <button class="tab" onclick="switchTab('adminSettings')">Ayarlar</button>
@@ -646,6 +649,7 @@
                                             <th>Tarih</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
+                                            <th>Not/Maliyet</th>
                                             <th>Oluşturan</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
@@ -672,10 +676,62 @@
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
-                                            <th>Ödeme Yöntemi</th>
+                                            <th>Ödeme</th>
+                                            <th>Not/Maliyet</th>
                                             <th>Oluşturan</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="adminCostPending" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Maliyet Ödenmeyi Bekleyenler</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="adminCostPendingTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Ad Soyad</th>
+                                            <th>IMEI</th>
+                                            <th>Marka Model</th>
+                                            <th>Servis Türü</th>
+                                            <th>Tutar</th>
+                                            <th>Not/Maliyet</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="adminCostPaid" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Maliyet Ödenenler</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="adminCostPaidTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Ad Soyad</th>
+                                            <th>IMEI</th>
+                                            <th>Marka Model</th>
+                                            <th>Servis Türü</th>
+                                            <th>Tutar</th>
+                                            <th>Not/Maliyet</th>
+                                            <th>Durum</th>
+                                            <th>3. Onay Tarihi</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -733,7 +789,7 @@
                                         <option value="selcuk">Fatura Oluşturma Yetkisi (Selçuk gibi)</option>
                                         <option value="mehmet">İşlem Oluşturma Yetkisi (Mehmet gibi)</option>
                                         <option value="ibrahim">1. Onay Yetkisi (İbrahim gibi)</option>
-                                        <option value="mahmut">2. Onay Yetkisi - Muhasebe (Mahmut gibi)</option>
+                                        <option value="mahmut">2. ve 3. Onay Yetkisi - Muhasebe (Mahmut gibi)</option>
                                     </select>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Kullanıcı Oluştur</button>
@@ -842,6 +898,7 @@
                                             <th>Tarih</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
+                                            <th>Not</th>
                                             <th>Durum</th>
                                         </tr>
                                     </thead>
@@ -917,15 +974,9 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label>Durum</label>
-                                    <div class="editable-select">
-                                        <input type="text" id="transStatus" value="1. Onay Bekliyor" onclick="toggleStatusOptions()">
-                                        <div id="statusDropdown" class="editable-options"></div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Not Bilgisi</label>
-                                    <textarea id="transNote"></textarea>
+                                    <label>Not / Maliyet Bilgisi * (Zorunlu)</label>
+                                    <textarea id="transNote" required placeholder="Maliyet bilgisini buraya girin..."></textarea>
+                                    <small style="color: #ef4444; display: block; margin-top: 5px;">⚠️ Bu alan zorunludur. Lütfen maliyet bilgisini girin.</small>
                                 </div>
                                 <button type="submit" class="btn btn-primary">İşlem Oluştur</button>
                             </form>
@@ -948,6 +999,7 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                         </tr>
                                     </thead>
@@ -1002,6 +1054,7 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1028,6 +1081,7 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1052,6 +1106,7 @@
                                             <th>Tarih</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
+                                            <th>Not</th>
                                             <th>Oluşturan</th>
                                             <th>Durum</th>
                                         </tr>
@@ -1076,6 +1131,7 @@
                                             <th>Tarih</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
+                                            <th>Not</th>
                                             <th>Oluşturan</th>
                                             <th>Durum</th>
                                         </tr>
@@ -1092,33 +1148,35 @@
                     <div class="grid">
                         <div class="stat-card">
                             <div class="stat-number" id="mahmutPendingInvoices">0</div>
-                            <div class="stat-label">Bekleyen Fatura</div>
+                            <div class="stat-label">Bekleyen Fatura (2. Onay)</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number" id="mahmutPendingTransactions">0</div>
-                            <div class="stat-label">Bekleyen İşlem</div>
+                            <div class="stat-label">Bekleyen İşlem (2. Onay)</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-number" id="mahmutApprovedInvoices">0</div>
-                            <div class="stat-label">Onaylanan Fatura</div>
+                            <div class="stat-number" id="mahmutCostPending">0</div>
+                            <div class="stat-label">Maliyet Onayı Bekleyen</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-number" id="mahmutApprovedTransactions">0</div>
-                            <div class="stat-label">Onaylanan İşlem</div>
+                            <div class="stat-number" id="mahmutCostPaid">0</div>
+                            <div class="stat-label">Maliyet Ödenenler</div>
                         </div>
                     </div>
 
                     <div class="tabs">
-                        <button class="tab active" onclick="switchTab('invoiceApprovals')">Fatura Onayları</button>
-                        <button class="tab" onclick="switchTab('transactionApprovals')">İşlem Onayları</button>
+                        <button class="tab active" onclick="switchTab('invoiceApprovals')">Fatura Onayları (2)</button>
+                        <button class="tab" onclick="switchTab('transactionApprovals')">İşlem Onayları (2)</button>
+                        <button class="tab" onclick="switchTab('costApprovals')">Maliyet Onayları (3)</button>
                         <button class="tab" onclick="switchTab('approvedInvoices')">Onaylanan Faturalar</button>
                         <button class="tab" onclick="switchTab('approvedTransactions')">Onaylanan İşlemler</button>
+                        <button class="tab" onclick="switchTab('costPaidList')">Maliyet Ödenenler</button>
                     </div>
 
                     <div id="invoiceApprovals" class="tab-content active">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Fatura Onay Listesi (Selçuk'tan Gelen)</h2>
+                                <h2 class="card-title">Fatura Onay Listesi (2. Onay)</h2>
                             </div>
                             <div class="table-container">
                                 <table id="mahmutInvoicesPendingTable">
@@ -1129,6 +1187,7 @@
                                             <th>Tarih</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
+                                            <th>Not</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1142,7 +1201,7 @@
                     <div id="transactionApprovals" class="tab-content">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">İşlem Onay Listesi (İbrahim'den Gelen)</h2>
+                                <h2 class="card-title">İşlem Onay Listesi (2. Onay)</h2>
                             </div>
                             <div class="table-container">
                                 <table id="mahmutTransactionsPendingTable">
@@ -1155,6 +1214,34 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Not/Maliyet</th>
+                                            <th>Durum</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="costApprovals" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Maliyet Onay Listesi (3. Onay)</h2>
+                                <p style="color: #6b7280; font-size: 14px;">Birinci ve ikinci onayı tamamlamış işlemler</p>
+                            </div>
+                            <div class="table-container">
+                                <table id="mahmutCostPendingTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Ad Soyad</th>
+                                            <th>IMEI</th>
+                                            <th>Marka Model</th>
+                                            <th>Servis Türü</th>
+                                            <th>Tutar</th>
+                                            <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1179,6 +1266,7 @@
                                             <th>Tarih</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
+                                            <th>Not</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1192,7 +1280,7 @@
                     <div id="approvedTransactions" class="tab-content">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Onayladığım İşlemler</h2>
+                                <h2 class="card-title">2. Onayı Verdiğim İşlemler</h2>
                             </div>
                             <div class="table-container">
                                 <table id="mahmutTransactionsApprovedTable">
@@ -1205,8 +1293,35 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="costPaidList" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Maliyet Ödenenler (3. Onay Tamamlananlar)</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="mahmutCostPaidTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Ad Soyad</th>
+                                            <th>IMEI</th>
+                                            <th>Marka Model</th>
+                                            <th>Servis Türü</th>
+                                            <th>Tutar</th>
+                                            <th>Not/Maliyet</th>
+                                            <th>Durum</th>
+                                            <th>3. Onay Tarihi</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -1251,7 +1366,6 @@
         let currentUser = null;
         let currentUserRole = null;
 
-        // Default User Role Mapping (Fallback)
         const defaultUserRoles = {
             'admin@servis.com': 'admin',
             'selcuk@mobilfon.com': 'selcuk',
@@ -1259,6 +1373,11 @@
             'muhasebe@mobilfon.com': 'mahmut',
             'ibrahim@mobilfon.com': 'ibrahim'
         };
+
+        // Generate 6-digit numeric ID
+        function generateSixDigitId() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
 
         // Initialize default options
         async function initializeDefaults() {
@@ -1270,7 +1389,7 @@
                 await dbSet(statusRef, {
                     'option1': '1. Onay Bekliyor',
                     'option2': '2. Onay Bekliyor',
-                    'option3': 'İşlemde',
+                    'option3': 'Maliyet Onayı Bekliyor',
                     'option4': 'Onaylandı',
                     'option5': 'Tamamlandı',
                     'option6': 'Reddedildi'
@@ -1288,7 +1407,6 @@
                 });
             }
 
-            // Initialize default users in database if not exists
             const usersRef = dbRef(db, 'users');
             const usersSnap = await dbGet(usersRef);
             if (!usersSnap.exists()) {
@@ -1304,9 +1422,7 @@
             }
         }
 
-        // Get User Role
         async function getUserRole(email) {
-            // First check database
             const usersRef = dbRef(db, 'users');
             const snapshot = await dbGet(usersRef);
             
@@ -1319,11 +1435,9 @@
                 }
             }
             
-            // Fallback to default mapping
             return defaultUserRoles[email] || null;
         }
 
-        // Login Function
         window.login = async function(event) {
             event.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -1344,7 +1458,6 @@
             }
         };
 
-        // Create User Function
         window.createUser = async function(event) {
             event.preventDefault();
             
@@ -1358,11 +1471,9 @@
             }
 
             try {
-                // Create user in Firebase Auth
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // Save user data to database
                 const usersRef = dbRef(db, `users/${user.uid}`);
                 await dbSet(usersRef, {
                     email: email,
@@ -1376,7 +1487,6 @@
                 alert('Kullanıcı başarıyla oluşturuldu!');
                 event.target.reset();
                 
-                // Re-login as admin
                 await signOut(auth);
                 setTimeout(() => {
                     window.location.reload();
@@ -1394,7 +1504,6 @@
             }
         };
 
-        // Load Users
         function loadUsers() {
             const usersRef = dbRef(db, 'users');
             dbOnValue(usersRef, (snapshot) => {
@@ -1423,7 +1532,6 @@
             });
         }
 
-        // Delete User
         window.deleteUser = async function(uid, email) {
             if (!confirm(`${email} kullanıcısını silmek istediğinizden emin misiniz?`)) return;
             
@@ -1437,13 +1545,11 @@
             }
         };
 
-        // Logout Function
         window.logout = async function() {
             await addLog(currentUser.email, 'Çıkış Yaptı', 'Kullanıcı sistemden çıkış yaptı');
             await signOut(auth);
         };
 
-        // Auth State Observer
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -1469,13 +1575,12 @@
                 'admin': 'Genel Admin',
                 'selcuk': 'Fatura Oluşturma',
                 'mehmet': 'İşlem Oluşturma',
-                'mahmut': 'Muhasebe 2. Onay',
+                'mahmut': 'Muhasebe 2. ve 3. Onay',
                 'ibrahim': '1. Onay'
             };
             return roleNames[role] || role;
         }
 
-        // Show Dashboard Based on Role
         function showDashboard(role) {
             ['adminDashboard', 'selcukDashboard', 'mehmetDashboard', 'mahmutDashboard', 'ibrahimDashboard'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
@@ -1508,7 +1613,6 @@
             }
         }
 
-        // Add Log
         async function addLog(userId, action, details) {
             const logsRef = dbRef(db, 'logs');
             const newLogRef = dbPush(logsRef);
@@ -1520,17 +1624,20 @@
             });
         }
 
-        // Create Invoice (Selçuk)
         window.createInvoice = async function(event) {
             event.preventDefault();
             
+            const sixDigitId = generateSixDigitId();
+            
             const invoiceData = {
+                customId: sixDigitId,
                 invoiceNumber: document.getElementById('invoiceNumber').value,
                 invoiceDate: document.getElementById('invoiceDate').value,
                 amount: parseFloat(document.getElementById('invoiceAmount').value),
                 company: document.getElementById('companyInfo').value,
                 note: document.getElementById('invoiceNote').value,
-                status: 'Onay Bekliyor',
+                status: '1. Onay Bekliyor',
+                approvalStage: 1,
                 createdBy: currentUser.email,
                 createdAt: new Date().toISOString(),
                 timestamp: Date.now()
@@ -1540,26 +1647,36 @@
             const newInvoiceRef = dbPush(invoicesRef);
             await dbSet(newInvoiceRef, invoiceData);
             
-            await addLog(currentUser.email, 'Fatura Oluşturdu', `Fatura No: ${invoiceData.invoiceNumber}`);
+            await addLog(currentUser.email, 'Fatura Oluşturdu', `ID: ${sixDigitId}, Fatura No: ${invoiceData.invoiceNumber}`);
             
-            alert('Fatura başarıyla oluşturuldu!');
+            alert(`Fatura başarıyla oluşturuldu! ID: ${sixDigitId}`);
             event.target.reset();
             loadSelcukData();
         };
 
-        // Create Transaction (Mehmet)
         window.createTransaction = async function(event) {
             event.preventDefault();
             
+            const noteValue = document.getElementById('transNote').value.trim();
+            
+            if (!noteValue) {
+                alert('⚠️ Not/Maliyet alanı zorunludur! Lütfen maliyet bilgisini girin.');
+                return;
+            }
+            
+            const sixDigitId = generateSixDigitId();
+            
             const transactionData = {
+                customId: sixDigitId,
                 customerName: document.getElementById('customerName').value,
                 imeiNumber: document.getElementById('imeiNumber').value,
                 brandModel: document.getElementById('brandModel').value,
                 serviceType: document.getElementById('serviceType').value,
                 amount: parseFloat(document.getElementById('transAmount').value),
                 paymentMethod: document.getElementById('paymentMethod').value,
-                status: document.getElementById('transStatus').value,
-                note: document.getElementById('transNote').value,
+                status: '1. Onay Bekliyor',
+                approvalStage: 1,
+                note: noteValue,
                 createdBy: currentUser.email,
                 createdAt: new Date().toISOString(),
                 timestamp: Date.now()
@@ -1569,59 +1686,88 @@
             const newTransactionRef = dbPush(transactionsRef);
             await dbSet(newTransactionRef, transactionData);
             
-            await addLog(currentUser.email, 'İşlem Oluşturdu', `Ad Soyad: ${transactionData.customerName}, IMEI: ${transactionData.imeiNumber}`);
+            await addLog(currentUser.email, 'İşlem Oluşturdu', `ID: ${sixDigitId}, Ad Soyad: ${transactionData.customerName}, IMEI: ${transactionData.imeiNumber}`);
             
-            alert('İşlem başarıyla oluşturuldu!');
+            alert(`İşlem başarıyla oluşturuldu! ID: ${sixDigitId}`);
             event.target.reset();
-            document.getElementById('transStatus').value = '1. Onay Bekliyor';
             document.getElementById('serviceType').value = '';
             loadMehmetData();
         };
 
-        // Approve Invoice (Mahmut)
         window.approveInvoice = async function(invoiceId) {
             const invoiceRef = dbRef(db, `invoices/${invoiceId}`);
+            const snapshot = await dbGet(invoiceRef);
+            const invoice = snapshot.val();
+            
             await dbUpdate(invoiceRef, {
                 status: 'Onaylandı',
-                approvedBy: currentUser.email,
-                approvedAt: new Date().toISOString()
+                approvalStage: 2,
+                secondApprovedBy: currentUser.email,
+                secondApprovedAt: new Date().toISOString()
             });
             
-            await addLog(currentUser.email, 'Fatura Onayladı', `ID: ${invoiceId}`);
-            alert('Fatura onaylandı!');
+            await addLog(currentUser.email, 'Fatura 2. Onayladı', `ID: ${invoice.customId}`);
+            alert('Fatura 2. onay verildi!');
             loadMahmutData();
         };
 
-        // Approve Transaction First (İbrahim)
         window.approveTransaction1 = async function(transactionId) {
             const transactionRef = dbRef(db, `transactions/${transactionId}`);
+            const snapshot = await dbGet(transactionRef);
+            const transaction = snapshot.val();
+            
             await dbUpdate(transactionRef, {
                 status: '2. Onay Bekliyor',
+                approvalStage: 2,
                 firstApprovedBy: currentUser.email,
                 firstApprovedAt: new Date().toISOString()
             });
             
-            await addLog(currentUser.email, '1. Onay Verdi', `ID: ${transactionId}`);
+            await addLog(currentUser.email, '1. Onay Verdi', `ID: ${transaction.customId}`);
             alert('1. Onay verildi! 2. Onay bekleniyor.');
             loadIbrahimData();
         };
 
-        // Approve Transaction Second (Mahmut)
         window.approveTransaction2 = async function(transactionId) {
             const transactionRef = dbRef(db, `transactions/${transactionId}`);
+            const snapshot = await dbGet(transactionRef);
+            const transaction = snapshot.val();
+            
             await dbUpdate(transactionRef, {
-                status: 'Tamamlandı',
+                status: 'Maliyet Onayı Bekliyor',
+                approvalStage: 3,
                 secondApprovedBy: currentUser.email,
-                secondApprovedAt: new Date().toISOString(),
-                completedAt: new Date().toISOString()
+                secondApprovedAt: new Date().toISOString()
             });
             
-            await addLog(currentUser.email, '2. Onay Verdi - İşlem Tamamlandı', `ID: ${transactionId}`);
-            alert('İşlem tamamlandı!');
+            await addLog(currentUser.email, '2. Onay Verdi', `ID: ${transaction.customId}`);
+            alert('2. Onay verildi! Maliyet onayı bekleniyor.');
             loadMahmutData();
         };
 
-        // Delete Record
+        window.approveCost = async function(transactionId) {
+            const transactionRef = dbRef(db, `transactions/${transactionId}`);
+            const snapshot = await dbGet(transactionRef);
+            const transaction = snapshot.val();
+            
+            if (!transaction.note || transaction.note.trim() === '') {
+                alert('⚠️ Not/Maliyet bilgisi eksik! 3. onay verilemez.');
+                return;
+            }
+            
+            await dbUpdate(transactionRef, {
+                status: 'Tamamlandı - Maliyet Ödendi',
+                approvalStage: 4,
+                thirdApprovedBy: currentUser.email,
+                thirdApprovedAt: new Date().toISOString(),
+                completedAt: new Date().toISOString()
+            });
+            
+            await addLog(currentUser.email, '3. Onay Verdi - Maliyet Ödendi', `ID: ${transaction.customId}, Maliyet: ${transaction.note}`);
+            alert('3. Onay (Maliyet) verildi! İşlem tamamlandı.');
+            loadMahmutData();
+        };
+
         window.deleteRecord = async function(type, id) {
             if (!confirm('Bu kaydı silmek istediğinizden emin misiniz?')) return;
             
@@ -1635,7 +1781,6 @@
             else if (currentUserRole === 'ibrahim') loadIbrahimData();
         };
 
-        // Load Admin Data
         async function loadAdminData() {
             const invoicesRef = dbRef(db, 'invoices');
             const transactionsRef = dbRef(db, 'transactions');
@@ -1654,11 +1799,12 @@
                 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     tbody.innerHTML += `
                         <tr>
-                            <td>${invoice.id.substring(0, 8)}</td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
                             <td>${invoice.createdBy}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                             <td><button class="action-btn btn-danger" onclick="deleteRecord('invoices', '${invoice.id}')">Sil</button></td>
@@ -1680,7 +1826,7 @@
                 
                 const today = new Date().toDateString();
                 const completedToday = transactions.filter(t => 
-                    t.status === 'Tamamlandı' && 
+                    t.status.includes('Tamamlandı') && 
                     t.completedAt &&
                     new Date(t.completedAt).toDateString() === today
                 ).length;
@@ -1691,16 +1837,56 @@
                 transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     tbody.innerHTML += `
                         <tr>
-                            <td>${transaction.id.substring(0, 8)}</td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td>${transaction.note || '-'}</td>
                             <td>${transaction.createdBy}</td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td><button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button></td>
+                        </tr>
+                    `;
+                });
+
+                // Maliyet Ödenecekler
+                const costPendingTbody = document.querySelector('#adminCostPendingTable tbody');
+                costPendingTbody.innerHTML = '';
+                const costPending = transactions.filter(t => t.status === 'Maliyet Onayı Bekliyor');
+                costPending.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    costPendingTbody.innerHTML += `
+                        <tr>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td>${transaction.customerName}</td>
+                            <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.brandModel}</td>
+                            <td>${transaction.serviceType || '-'}</td>
+                            <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                            <td><span class="badge badge-cost-pending">${transaction.status}</span></td>
+                        </tr>
+                    `;
+                });
+
+                // Maliyet Ödenenler
+                const costPaidTbody = document.querySelector('#adminCostPaidTable tbody');
+                costPaidTbody.innerHTML = '';
+                const costPaid = transactions.filter(t => t.status === 'Tamamlandı - Maliyet Ödendi');
+                costPaid.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    costPaidTbody.innerHTML += `
+                        <tr>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td>${transaction.customerName}</td>
+                            <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.brandModel}</td>
+                            <td>${transaction.serviceType || '-'}</td>
+                            <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                            <td><span class="badge badge-cost-paid">${transaction.status}</span></td>
+                            <td>${transaction.thirdApprovedAt ? new Date(transaction.thirdApprovedAt).toLocaleString('tr-TR') : '-'}</td>
                         </tr>
                     `;
                 });
@@ -1731,7 +1917,6 @@
             loadServiceTypes();
         }
 
-        // Load Selçuk Data
         function loadSelcukData() {
             const invoicesRef = dbRef(db, 'invoices');
             dbOnValue(invoicesRef, (snapshot) => {
@@ -1748,11 +1933,12 @@
                 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     tbody.innerHTML += `
                         <tr>
-                            <td>${invoice.id.substring(0, 8)}</td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                         </tr>
                     `;
@@ -1760,7 +1946,6 @@
             });
         }
 
-        // Load Mehmet Data
         function loadMehmetData() {
             const transactionsRef = dbRef(db, 'transactions');
             dbOnValue(transactionsRef, (snapshot) => {
@@ -1777,13 +1962,14 @@
                 transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     tbody.innerHTML += `
                         <tr>
-                            <td>${transaction.id.substring(0, 8)}</td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                         </tr>
                     `;
@@ -1791,12 +1977,10 @@
             });
         }
 
-        // Load İbrahim Data
         function loadIbrahimData() {
             const transactionsRef = dbRef(db, 'transactions');
             const invoicesRef = dbRef(db, 'invoices');
 
-            // Load Transactions
             dbOnValue(transactionsRef, (snapshot) => {
                 const allTransactions = [];
                 const pendingTransactions = [];
@@ -1816,19 +2000,19 @@
                 document.getElementById('ibrahimPending').textContent = pendingTransactions.length;
                 document.getElementById('ibrahimApproved').textContent = approvedTransactions.length;
                 
-                // Bekleyen İşlemler
                 const pendingTbody = document.querySelector('#ibrahimPendingTable tbody');
                 pendingTbody.innerHTML = '';
                 pendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     pendingTbody.innerHTML += `
                         <tr>
-                            <td>${transaction.id.substring(0, 8)}</td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
                                 <button class="action-btn btn-success" onclick="approveTransaction1('${transaction.id}')">1. Onay Ver</button>
@@ -1837,19 +2021,19 @@
                     `;
                 });
 
-                // Onaylanan İşlemler
                 const approvedTbody = document.querySelector('#ibrahimApprovedTable tbody');
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     approvedTbody.innerHTML += `
                         <tr>
-                            <td>${transaction.id.substring(0, 8)}</td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
                                 <button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button>
@@ -1859,7 +2043,6 @@
                 });
             });
 
-            // Load Invoices
             dbOnValue(invoicesRef, (snapshot) => {
                 const allInvoices = [];
                 const pendingInvoices = [];
@@ -1869,7 +2052,7 @@
                     const invoice = { id: child.key, ...child.val() };
                     allInvoices.push(invoice);
                     
-                    if (invoice.status === 'Onay Bekliyor') {
+                    if (invoice.status === '1. Onay Bekliyor') {
                         pendingInvoices.push(invoice);
                     } else {
                         approvedInvoices.push(invoice);
@@ -1879,34 +2062,34 @@
                 document.getElementById('ibrahimPendingInvoices').textContent = pendingInvoices.length;
                 document.getElementById('ibrahimApprovedInvoices').textContent = approvedInvoices.length;
                 
-                // Bekleyen Faturalar
                 const pendingInvoicesTbody = document.querySelector('#ibrahimInvoicesPendingTable tbody');
                 pendingInvoicesTbody.innerHTML = '';
                 pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     pendingInvoicesTbody.innerHTML += `
                         <tr>
-                            <td>${invoice.id.substring(0, 8)}</td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
                             <td>${invoice.createdBy}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                         </tr>
                     `;
                 });
 
-                // Onaylanan Faturalar
                 const approvedInvoicesTbody = document.querySelector('#ibrahimInvoicesApprovedTable tbody');
                 approvedInvoicesTbody.innerHTML = '';
                 approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     approvedInvoicesTbody.innerHTML += `
                         <tr>
-                            <td>${invoice.id.substring(0, 8)}</td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
                             <td>${invoice.createdBy}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                         </tr>
@@ -1915,7 +2098,6 @@
             });
         }
 
-        // Load Mahmut Data
         function loadMahmutData() {
             const invoicesRef = dbRef(db, 'invoices');
             const transactionsRef = dbRef(db, 'transactions');
@@ -1929,31 +2111,30 @@
                     const invoice = { id: child.key, ...child.val() };
                     allInvoices.push(invoice);
                     
-                    if (invoice.status === 'Onay Bekliyor') {
+                    if (invoice.status === '1. Onay Bekliyor') {
                         pendingInvoices.push(invoice);
-                    } else if (invoice.approvedBy === currentUser.email) {
+                    } else if (invoice.secondApprovedBy === currentUser.email) {
                         approvedInvoices.push(invoice);
                     }
                 });
 
                 document.getElementById('mahmutPendingInvoices').textContent = pendingInvoices.length;
-                document.getElementById('mahmutApprovedInvoices').textContent = approvedInvoices.length;
                 
-                // Bekleyen Faturalar
                 const pendingTbody = document.querySelector('#mahmutInvoicesPendingTable tbody');
                 pendingTbody.innerHTML = '';
                 pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     pendingTbody.innerHTML += `
                         <tr>
-                            <td>${invoice.id.substring(0, 8)}</td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                             <td>
                                 <div class="action-buttons">
-                                    <button class="action-btn btn-success" onclick="approveInvoice('${invoice.id}')">Onayla</button>
+                                    <button class="action-btn btn-success" onclick="approveInvoice('${invoice.id}')">2. Onayla</button>
                                     <button class="action-btn btn-danger" onclick="deleteRecord('invoices', '${invoice.id}')">Sil</button>
                                 </div>
                             </td>
@@ -1961,17 +2142,17 @@
                     `;
                 });
 
-                // Onaylanan Faturalar
                 const approvedTbody = document.querySelector('#mahmutInvoicesApprovedTable tbody');
                 approvedTbody.innerHTML = '';
                 approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     approvedTbody.innerHTML += `
                         <tr>
-                            <td>${invoice.id.substring(0, 8)}</td>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong></td>
                             <td>${invoice.invoiceNumber}</td>
                             <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
                             <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
                             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                             <td>
                                 <button class="action-btn btn-danger" onclick="deleteRecord('invoices', '${invoice.id}')">Sil</button>
@@ -1983,40 +2164,48 @@
 
             dbOnValue(transactionsRef, (snapshot) => {
                 const allTransactions = [];
-                const pendingTransactions = [];
+                const pendingTransactions2 = [];
                 const approvedTransactions = [];
+                const costPendingTransactions = [];
+                const costPaidTransactions = [];
 
                 snapshot.forEach((child) => {
                     const transaction = { id: child.key, ...child.val() };
                     allTransactions.push(transaction);
                     
                     if (transaction.status === '2. Onay Bekliyor') {
-                        pendingTransactions.push(transaction);
-                    } else if (transaction.secondApprovedBy === currentUser.email) {
+                        pendingTransactions2.push(transaction);
+                    } else if (transaction.secondApprovedBy === currentUser.email && transaction.status !== 'Maliyet Onayı Bekliyor' && transaction.status !== 'Tamamlandı - Maliyet Ödendi') {
                         approvedTransactions.push(transaction);
+                    } else if (transaction.status === 'Maliyet Onayı Bekliyor') {
+                        costPendingTransactions.push(transaction);
+                    } else if (transaction.status === 'Tamamlandı - Maliyet Ödendi') {
+                        costPaidTransactions.push(transaction);
                     }
                 });
 
-                document.getElementById('mahmutPendingTransactions').textContent = pendingTransactions.length;
-                document.getElementById('mahmutApprovedTransactions').textContent = approvedTransactions.length;
+                document.getElementById('mahmutPendingTransactions').textContent = pendingTransactions2.length;
+                document.getElementById('mahmutCostPending').textContent = costPendingTransactions.length;
+                document.getElementById('mahmutCostPaid').textContent = costPaidTransactions.length;
                 
-                // Bekleyen İşlemler
+                // 2. Onay Bekleyenler
                 const pendingTbody = document.querySelector('#mahmutTransactionsPendingTable tbody');
                 pendingTbody.innerHTML = '';
-                pendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                pendingTransactions2.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     pendingTbody.innerHTML += `
                         <tr>
-                            <td>${transaction.id.substring(0, 8)}</td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
                                 <div class="action-buttons">
-                                    <button class="action-btn btn-success" onclick="approveTransaction2('${transaction.id}')">2. Onay - Tamamla</button>
+                                    <button class="action-btn btn-success" onclick="approveTransaction2('${transaction.id}')">2. Onayla</button>
                                     <button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button>
                                 </div>
                             </td>
@@ -2024,19 +2213,43 @@
                     `;
                 });
 
-                // Onaylanan İşlemler
+                // Maliyet Onayı Bekleyenler (3. Onay)
+                const costPendingTbody = document.querySelector('#mahmutCostPendingTable tbody');
+                costPendingTbody.innerHTML = '';
+                costPendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    costPendingTbody.innerHTML += `
+                        <tr>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td>${transaction.customerName}</td>
+                            <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.brandModel}</td>
+                            <td>${transaction.serviceType || '-'}</td>
+                            <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td><div class="cost-info"><strong>Maliyet:</strong> ${transaction.note || 'Bilgi yok'}</div></td>
+                            <td><span class="badge badge-cost-pending">${transaction.status}</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn btn-success" onclick="approveCost('${transaction.id}')">3. Onay - Maliyet Öde</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                // 2. Onayı Verilenler
                 const approvedTbody = document.querySelector('#mahmutTransactionsApprovedTable tbody');
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     approvedTbody.innerHTML += `
                         <tr>
-                            <td>${transaction.id.substring(0, 8)}</td>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
                                 <button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button>
@@ -2044,10 +2257,28 @@
                         </tr>
                     `;
                 });
+
+                // Maliyet Ödenenler
+                const costPaidTbody = document.querySelector('#mahmutCostPaidTable tbody');
+                costPaidTbody.innerHTML = '';
+                costPaidTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    costPaidTbody.innerHTML += `
+                        <tr>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
+                            <td>${transaction.customerName}</td>
+                            <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.brandModel}</td>
+                            <td>${transaction.serviceType || '-'}</td>
+                            <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                            <td><span class="badge badge-cost-paid">${transaction.status}</span></td>
+                            <td>${transaction.thirdApprovedAt ? new Date(transaction.thirdApprovedAt).toLocaleString('tr-TR') : '-'}</td>
+                        </tr>
+                    `;
+                });
             });
         }
 
-        // Load Status Options
         function loadStatusOptions() {
             const statusRef = dbRef(db, 'statusOptions');
             dbOnValue(statusRef, (snapshot) => {
@@ -2068,22 +2299,9 @@
                         `;
                     });
                 }
-
-                const dropdown = document.getElementById('statusDropdown');
-                if (dropdown) {
-                    dropdown.innerHTML = options.map(o => 
-                        `<div class="option-item" onclick="selectStatus('${o.value}')">${o.value}</div>`
-                    ).join('') + `
-                        <div class="add-option">
-                            <input type="text" id="newStatus" placeholder="Yeni durum ekle">
-                            <button onclick="addNewStatus()">Ekle</button>
-                        </div>
-                    `;
-                }
             });
         }
 
-        // Load Service Types
         function loadServiceTypes() {
             const serviceRef = dbRef(db, 'serviceTypes');
             dbOnValue(serviceRef, (snapshot) => {
@@ -2121,37 +2339,14 @@
             });
         }
 
-        // Toggle Dropdowns
-        window.toggleStatusOptions = function() {
-            const dropdown = document.getElementById('statusDropdown');
-            dropdown.classList.toggle('active');
-            document.getElementById('serviceTypeDropdown').classList.remove('active');
-        };
-
         window.toggleServiceTypes = function() {
             const dropdown = document.getElementById('serviceTypeDropdown');
             dropdown.classList.toggle('active');
-            document.getElementById('statusDropdown').classList.remove('active');
-        };
-
-        window.selectStatus = function(status) {
-            document.getElementById('transStatus').value = status;
-            document.getElementById('statusDropdown').classList.remove('active');
         };
 
         window.selectServiceType = function(type) {
             document.getElementById('serviceType').value = type;
             document.getElementById('serviceTypeDropdown').classList.remove('active');
-        };
-
-        window.addNewStatus = async function() {
-            const input = document.getElementById('newStatus');
-            if (input.value.trim()) {
-                const statusRef = dbRef(db, 'statusOptions');
-                const newStatusRef = dbPush(statusRef);
-                await dbSet(newStatusRef, input.value.trim());
-                input.value = '';
-            }
         };
 
         window.addNewServiceType = async function() {
@@ -2207,15 +2402,16 @@
         };
 
         function getStatusBadge(status) {
-            if (status.includes('Bekliyor')) return 'badge-pending';
-            if (status === 'İşlemde') return 'badge-progress';
+            if (status === '1. Onay Bekliyor') return 'badge-pending';
+            if (status === '2. Onay Bekliyor') return 'badge-progress';
+            if (status === 'Maliyet Onayı Bekliyor') return 'badge-cost-pending';
             if (status === 'Onaylandı') return 'badge-approved';
+            if (status === 'Tamamlandı - Maliyet Ödendi') return 'badge-cost-paid';
             if (status === 'Tamamlandı') return 'badge-completed';
             if (status === 'Reddedildi') return 'badge-rejected';
             return 'badge-pending';
         }
 
-        // Tab Switching
         window.switchTab = function(tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -2224,7 +2420,6 @@
             document.getElementById(tabName).classList.add('active');
         };
 
-        // Search
         window.searchRecords = function() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('table tbody tr').forEach(row => {
@@ -2233,7 +2428,6 @@
             });
         };
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.editable-select')) {
                 document.querySelectorAll('.editable-options').forEach(dropdown => {
@@ -2244,3 +2438,10 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+                            
