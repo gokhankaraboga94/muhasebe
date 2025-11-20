@@ -578,6 +578,75 @@
             font-size: 14px;
             line-height: 1.6;
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .modal-body {
+            color: #6b7280;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-footer button {
+            width: auto;
+            padding: 10px 24px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -666,7 +735,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Fatura No</th>
-                                            <th>Tarih</th>
+                                            <th>Fatura Tarihi</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
@@ -693,10 +762,12 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Oluşturan</th>
                                             <th>Durum</th>
@@ -721,6 +792,7 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
@@ -746,6 +818,7 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
@@ -922,7 +995,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Fatura No</th>
-                                            <th>Tarih</th>
+                                            <th>Fatura Tarihi</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
@@ -968,18 +1041,24 @@
                                 <div class="row">
                                     <div class="col">
                                         <div class="form-group">
+                                            <label>TC No (İsteğe Bağlı)</label>
+                                            <input type="text" id="tcNumber" placeholder="TC Kimlik No">
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
                                             <label>Marka Model *</label>
                                             <input type="text" id="brandModel" required>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row">
                                     <div class="col">
                                         <div class="form-group">
                                             <label>Tutar (₺) *</label>
                                             <input type="number" step="0.01" id="transAmount" required>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="row">
                                     <div class="col">
                                         <div class="form-group">
                                             <label>Servis Türü *</label>
@@ -989,6 +1068,8 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row">
                                     <div class="col">
                                         <div class="form-group">
                                             <label>Ödeme Yöntemi *</label>
@@ -999,6 +1080,12 @@
                                                 <option value="Banka Transferi">Banka Transferi</option>
                                                 <option value="Havale">Havale</option>
                                             </select>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label>Ödeme Alınma Tarihi (İsteğe Bağlı)</label>
+                                            <input type="date" id="paymentDate">
                                         </div>
                                     </div>
                                 </div>
@@ -1024,10 +1111,12 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                         </tr>
@@ -1099,7 +1188,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Fatura No</th>
-                                            <th>Tarih</th>
+                                            <th>Fatura Tarihi</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
@@ -1153,10 +1242,12 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
@@ -1180,10 +1271,12 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
@@ -1206,7 +1299,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Fatura No</th>
-                                            <th>Tarih</th>
+                                            <th>Fatura Tarihi</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
@@ -1232,7 +1325,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Fatura No</th>
-                                            <th>Tarih</th>
+                                            <th>Fatura Tarihi</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
@@ -1288,7 +1381,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Fatura No</th>
-                                            <th>Tarih</th>
+                                            <th>Fatura Tarihi</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
@@ -1315,10 +1408,12 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
@@ -1343,6 +1438,7 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
@@ -1368,7 +1464,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Fatura No</th>
-                                            <th>Tarih</th>
+                                            <th>Fatura Tarihi</th>
                                             <th>Tutar</th>
                                             <th>Firma</th>
                                             <th>Not</th>
@@ -1395,10 +1491,12 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Ödeme</th>
+                                            <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
@@ -1422,6 +1520,7 @@
                                             <th>ID</th>
                                             <th>Ad Soyad</th>
                                             <th>IMEI</th>
+                                            <th>TC No</th>
                                             <th>Marka Model</th>
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
@@ -1436,6 +1535,18 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle">Onay Gerekli</div>
+            <div class="modal-body" id="modalMessage">Bu işlemi yapmak istediğinizden emin misiniz?</div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="closeModal()">İptal</button>
+                <button class="btn btn-success" id="modalConfirmBtn">Onayla</button>
             </div>
         </div>
     </div>
@@ -1471,6 +1582,7 @@
 
         let currentUser = null;
         let currentUserRole = null;
+        let pendingAction = null;
 
         const defaultUserRoles = {
             'admin@servis.com': 'admin',
@@ -1483,6 +1595,36 @@
         function generateSixDigitId() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
+
+        // Modal Functions
+        window.showConfirmModal = function(title, message, onConfirm) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('confirmModal').classList.add('active');
+            
+            pendingAction = onConfirm;
+            
+            document.getElementById('modalConfirmBtn').onclick = function() {
+                if (pendingAction) {
+                    pendingAction();
+                    pendingAction = null;
+                }
+                closeModal();
+            };
+        };
+
+        window.closeModal = function() {
+            document.getElementById('confirmModal').classList.remove('active');
+            pendingAction = null;
+        };
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('confirmModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
 
         async function initializeDefaults() {
             const statusRef = dbRef(db, 'statusOptions');
@@ -1637,16 +1779,20 @@
         }
 
         window.deleteUser = async function(uid, email) {
-            if (!confirm(`${email} kullanıcısını silmek istediğinizden emin misiniz?`)) return;
-            
-            try {
-                const userRef = dbRef(db, `users/${uid}`);
-                await dbRemove(userRef);
-                await addLog(currentUser.email, 'Kullanıcı Sildi', `E-posta: ${email}`);
-                alert('Kullanıcı silindi!');
-            } catch (error) {
-                alert('Kullanıcı silinirken bir hata oluştu: ' + error.message);
-            }
+            showConfirmModal(
+                'Kullanıcı Silme',
+                `${email} kullanıcısını silmek istediğinizden emin misiniz?`,
+                async () => {
+                    try {
+                        const userRef = dbRef(db, `users/${uid}`);
+                        await dbRemove(userRef);
+                        await addLog(currentUser.email, 'Kullanıcı Sildi', `E-posta: ${email}`);
+                        alert('Kullanıcı silindi!');
+                    } catch (error) {
+                        alert('Kullanıcı silinirken bir hata oluştu: ' + error.message);
+                    }
+                }
+            );
         };
 
         window.logout = async function() {
@@ -1804,10 +1950,12 @@
                 customId: sixDigitId,
                 customerName: document.getElementById('customerName').value,
                 imeiNumber: document.getElementById('imeiNumber').value,
+                tcNumber: document.getElementById('tcNumber').value || '',
                 brandModel: document.getElementById('brandModel').value,
                 serviceType: document.getElementById('serviceType').value,
                 amount: parseFloat(document.getElementById('transAmount').value),
                 paymentMethod: document.getElementById('paymentMethod').value,
+                paymentDate: document.getElementById('paymentDate').value || '',
                 status: '1. Onay Bekliyor',
                 approvalStage: 1,
                 note: noteValue,
@@ -1833,16 +1981,22 @@
             const snapshot = await dbGet(invoiceRef);
             const invoice = snapshot.val();
             
-            await dbUpdate(invoiceRef, {
-                status: '2. Onay Bekliyor',
-                approvalStage: 2,
-                firstApprovedBy: currentUser.email,
-                firstApprovedAt: new Date().toISOString()
-            });
-            
-            await addLog(currentUser.email, 'Fatura 1. Onayladı', `ID: ${invoice.customId}`);
-            alert('Fatura 1. onay verildi! 2. Onay bekleniyor.');
-            loadIbrahimData();
+            showConfirmModal(
+                '1. Onay - Fatura',
+                `Fatura No: ${invoice.invoiceNumber}\nTutar: ${invoice.amount.toLocaleString('tr-TR')} ₺\n\nBu faturayı onaylamak istediğinizden emin misiniz?`,
+                async () => {
+                    await dbUpdate(invoiceRef, {
+                        status: '2. Onay Bekliyor',
+                        approvalStage: 2,
+                        firstApprovedBy: currentUser.email,
+                        firstApprovedAt: new Date().toISOString()
+                    });
+                    
+                    await addLog(currentUser.email, 'Fatura 1. Onayladı', `ID: ${invoice.customId}`);
+                    alert('Fatura 1. onay verildi! 2. Onay bekleniyor.');
+                    loadIbrahimData();
+                }
+            );
         };
 
         window.approveInvoice2 = async function(invoiceId) {
@@ -1850,17 +2004,23 @@
             const snapshot = await dbGet(invoiceRef);
             const invoice = snapshot.val();
             
-            await dbUpdate(invoiceRef, {
-                status: 'Onaylandı',
-                approvalStage: 3,
-                secondApprovedBy: currentUser.email,
-                secondApprovedAt: new Date().toISOString(),
-                completedAt: new Date().toISOString()
-            });
-            
-            await addLog(currentUser.email, 'Fatura 2. Onayladı - Tamamlandı', `ID: ${invoice.customId}`);
-            alert('Fatura 2. onay verildi! Fatura onaylandı ve tamamlandı.');
-            loadMahmutData();
+            showConfirmModal(
+                '2. Onay - Fatura',
+                `Fatura No: ${invoice.invoiceNumber}\nTutar: ${invoice.amount.toLocaleString('tr-TR')} ₺\n\nBu faturayı onaylamak istediğinizden emin misiniz? (Onaylandıktan sonra fatura tamamlanacaktır)`,
+                async () => {
+                    await dbUpdate(invoiceRef, {
+                        status: 'Onaylandı',
+                        approvalStage: 3,
+                        secondApprovedBy: currentUser.email,
+                        secondApprovedAt: new Date().toISOString(),
+                        completedAt: new Date().toISOString()
+                    });
+                    
+                    await addLog(currentUser.email, 'Fatura 2. Onayladı - Tamamlandı', `ID: ${invoice.customId}`);
+                    alert('Fatura 2. onay verildi! Fatura onaylandı ve tamamlandı.');
+                    loadMahmutData();
+                }
+            );
         };
 
         window.approveTransaction1 = async function(transactionId) {
@@ -1868,16 +2028,22 @@
             const snapshot = await dbGet(transactionRef);
             const transaction = snapshot.val();
             
-            await dbUpdate(transactionRef, {
-                status: '2. Onay Bekliyor',
-                approvalStage: 2,
-                firstApprovedBy: currentUser.email,
-                firstApprovedAt: new Date().toISOString()
-            });
-            
-            await addLog(currentUser.email, '1. Onay Verdi', `ID: ${transaction.customId}`);
-            alert('1. Onay verildi! 2. Onay bekleniyor.');
-            loadIbrahimData();
+            showConfirmModal(
+                '1. Onay - İşlem',
+                `Ad Soyad: ${transaction.customerName}\nIMEI: ${transaction.imeiNumber}\nTutar: ${transaction.amount.toLocaleString('tr-TR')} ₺\n\nBu işlemi onaylamak istediğinizden emin misiniz?`,
+                async () => {
+                    await dbUpdate(transactionRef, {
+                        status: '2. Onay Bekliyor',
+                        approvalStage: 2,
+                        firstApprovedBy: currentUser.email,
+                        firstApprovedAt: new Date().toISOString()
+                    });
+                    
+                    await addLog(currentUser.email, '1. Onay Verdi', `ID: ${transaction.customId}`);
+                    alert('1. Onay verildi! 2. Onay bekleniyor.');
+                    loadIbrahimData();
+                }
+            );
         };
 
         window.approveTransaction2 = async function(transactionId) {
@@ -1885,16 +2051,22 @@
             const snapshot = await dbGet(transactionRef);
             const transaction = snapshot.val();
             
-            await dbUpdate(transactionRef, {
-                status: 'Maliyet Onayı Bekliyor',
-                approvalStage: 3,
-                secondApprovedBy: currentUser.email,
-                secondApprovedAt: new Date().toISOString()
-            });
-            
-            await addLog(currentUser.email, '2. Onay Verdi', `ID: ${transaction.customId}`);
-            alert('2. Onay verildi! Maliyet onayı bekleniyor.');
-            loadMahmutData();
+            showConfirmModal(
+                '2. Onay - İşlem',
+                `Ad Soyad: ${transaction.customerName}\nIMEI: ${transaction.imeiNumber}\nTutar: ${transaction.amount.toLocaleString('tr-TR')} ₺\n\nBu işlemi onaylamak istediğinizden emin misiniz? (İşlem maliyet onayı bekleme durumuna geçecektir)`,
+                async () => {
+                    await dbUpdate(transactionRef, {
+                        status: 'Maliyet Onayı Bekliyor',
+                        approvalStage: 3,
+                        secondApprovedBy: currentUser.email,
+                        secondApprovedAt: new Date().toISOString()
+                    });
+                    
+                    await addLog(currentUser.email, '2. Onay Verdi', `ID: ${transaction.customId}`);
+                    alert('2. Onay verildi! Maliyet onayı bekleniyor.');
+                    loadMahmutData();
+                }
+            );
         };
 
         window.approveCost = async function(transactionId) {
@@ -1907,30 +2079,40 @@
                 return;
             }
             
-            await dbUpdate(transactionRef, {
-                status: 'Tamamlandı - Maliyet Ödendi',
-                approvalStage: 4,
-                thirdApprovedBy: currentUser.email,
-                thirdApprovedAt: new Date().toISOString(),
-                completedAt: new Date().toISOString()
-            });
-            
-            await addLog(currentUser.email, '3. Onay Verdi - Maliyet Ödendi', `ID: ${transaction.customId}, Maliyet: ${transaction.note}`);
-            alert('3. Onay (Maliyet) verildi! İşlem tamamlandı.');
-            loadMahmutData();
+            showConfirmModal(
+                '3. Onay - Maliyet Ödeme',
+                `Ad Soyad: ${transaction.customerName}\nIMEI: ${transaction.imeiNumber}\nMaliyet: ${transaction.note}\n\nMaliyeti ödediğinizi ve bu işlemi tamamlamak istediğinizi onaylıyor musunuz?`,
+                async () => {
+                    await dbUpdate(transactionRef, {
+                        status: 'Tamamlandı - Maliyet Ödendi',
+                        approvalStage: 4,
+                        thirdApprovedBy: currentUser.email,
+                        thirdApprovedAt: new Date().toISOString(),
+                        completedAt: new Date().toISOString()
+                    });
+                    
+                    await addLog(currentUser.email, '3. Onay Verdi - Maliyet Ödendi', `ID: ${transaction.customId}, Maliyet: ${transaction.note}`);
+                    alert('3. Onay (Maliyet) verildi! İşlem tamamlandı.');
+                    loadMahmutData();
+                }
+            );
         };
 
         window.deleteRecord = async function(type, id) {
-            if (!confirm('Bu kaydı silmek istediğinizden emin misiniz?')) return;
-            
-            const recordRef = dbRef(db, `${type}/${id}`);
-            await dbRemove(recordRef);
-            await addLog(currentUser.email, `${type} Sildi`, `ID: ${id}`);
-            alert('Kayıt silindi!');
-            
-            if (currentUserRole === 'admin') loadAdminData();
-            else if (currentUserRole === 'mahmut') loadMahmutData();
-            else if (currentUserRole === 'ibrahim') loadIbrahimData();
+            showConfirmModal(
+                'Kayıt Silme',
+                'Bu kaydı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+                async () => {
+                    const recordRef = dbRef(db, `${type}/${id}`);
+                    await dbRemove(recordRef);
+                    await addLog(currentUser.email, `${type} Sildi`, `ID: ${id}`);
+                    alert('Kayıt silindi!');
+                    
+                    if (currentUserRole === 'admin') loadAdminData();
+                    else if (currentUserRole === 'mahmut') loadMahmutData();
+                    else if (currentUserRole === 'ibrahim') loadIbrahimData();
+                }
+            );
         };
 
         async function loadAdminData() {
@@ -1987,15 +2169,18 @@
                 const tbody = document.querySelector('#adminTransactionsTable tbody');
                 tbody.innerHTML = '';
                 transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                     tbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td>${paymentDate}</td>
                             <td>${transaction.note || '-'}</td>
                             <td>${transaction.createdBy}</td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
@@ -2013,6 +2198,7 @@
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2031,6 +2217,7 @@
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2112,15 +2299,18 @@
                 const tbody = document.querySelector('#mehmetTransactionsTable tbody');
                 tbody.innerHTML = '';
                 transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                     tbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td>${paymentDate}</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                         </tr>
@@ -2181,15 +2371,18 @@
                 const pendingTbody = document.querySelector('#ibrahimPendingTable tbody');
                 pendingTbody.innerHTML = '';
                 pendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                     pendingTbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td>${paymentDate}</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
@@ -2202,15 +2395,18 @@
                 const approvedTbody = document.querySelector('#ibrahimApprovedTable tbody');
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                     approvedTbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td>${paymentDate}</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
@@ -2374,15 +2570,18 @@
                 const pendingTbody = document.querySelector('#mahmutTransactionsPendingTable tbody');
                 pendingTbody.innerHTML = '';
                 pendingTransactions2.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                     pendingTbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td>${paymentDate}</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
@@ -2403,6 +2602,7 @@
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2420,15 +2620,18 @@
                 const approvedTbody = document.querySelector('#mahmutTransactionsApprovedTable tbody');
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                     approvedTbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td>${transaction.paymentMethod}</td>
+                            <td>${paymentDate}</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
@@ -2446,6 +2649,7 @@
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong></td>
                             <td>${transaction.customerName}</td>
                             <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
                             <td>${transaction.brandModel}</td>
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
@@ -2567,17 +2771,25 @@
         };
 
         window.deleteStatusOption = async function(id) {
-            if (confirm('Bu durum seçeneğini silmek istediğinizden emin misiniz?')) {
-                const statusRef = dbRef(db, `statusOptions/${id}`);
-                await dbRemove(statusRef);
-            }
+            showConfirmModal(
+                'Durum Seçeneği Silme',
+                'Bu durum seçeneğini silmek istediğinizden emin misiniz?',
+                async () => {
+                    const statusRef = dbRef(db, `statusOptions/${id}`);
+                    await dbRemove(statusRef);
+                }
+            );
         };
 
         window.deleteServiceType = async function(id) {
-            if (confirm('Bu servis türünü silmek istediğinizden emin misiniz?')) {
-                const serviceRef = dbRef(db, `serviceTypes/${id}`);
-                await dbRemove(serviceRef);
-            }
+            showConfirmModal(
+                'Servis Türü Silme',
+                'Bu servis türünü silmek istediğinizden emin misiniz?',
+                async () => {
+                    const serviceRef = dbRef(db, `serviceTypes/${id}`);
+                    await dbRemove(serviceRef);
+                }
+            );
         };
 
         function getStatusBadge(status) {
