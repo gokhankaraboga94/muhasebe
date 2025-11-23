@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -694,6 +696,18 @@
             margin-left: 8px;
         }
     </style>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+   (function(){
+      // BURAYA EmailJS'den aldığın Public Key'i yaz
+      emailjs.init("wOBxpRyC1mGP3GIvQ");
+   })();
+</script>
+
+
+
+
 </head>
 <body>
     <div class="container" id="app">
@@ -1934,6 +1948,36 @@
             databaseURL: "https://muhasebe-14b3d-default-rtdb.firebaseio.com"
         };
 
+        // Mail Gönderme Yardımcı Fonksiyonu
+async function sendEmailNotification(toRole, subject, detailMsg) {
+    // Rollerin gerçek mail adreslerini buraya tanımla
+    const emails = {
+        'ibrahim': 'gokhan.karaboga94@gmail.com', // Gerçek mail adresi olmalı
+        'mahmut': 'gokhan.karaboga94@gmail.com'  // Gerçek mail adresi olmalı
+    };
+
+    const targetEmail = emails[toRole];
+    
+    if (!targetEmail) {
+        console.log('Bu rol için mail tanımlı değil:', toRole);
+        return;
+    }
+
+    const templateParams = {
+        to_email: targetEmail,
+        subject: subject,
+        message: detailMsg
+    };
+
+    // 'service_xxx' ve 'template_xxx' kısımlarını EmailJS'den aldıklarınla değiştir
+    try {
+        await emailjs.send('service_ir6y58a', 'template_j1qjuy7', templateParams);
+        console.log('Mail başarıyla gönderildi:', targetEmail);
+    } catch (error) {
+        console.error('Mail gönderme hatası:', error);
+    }
+}
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
@@ -2390,6 +2434,15 @@
             
             await addLog(currentUser.email, 'Fatura Oluşturdu', `ID: ${sixDigitId}, Fatura No: ${invoiceData.invoiceNumber}`);
             
+            // --- BURAYA EKLE (BAŞLANGIÇ) ---
+            // İbrahim'e Mail At
+            await sendEmailNotification(
+                'ibrahim', 
+                'Yeni Fatura Onayı Bekliyor', 
+                `Selçuk tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
+            );
+            // --- BURAYA EKLE (BİTİŞ) ---
+
             alert(`Fatura başarıyla oluşturuldu! ID: ${sixDigitId}`);
             event.target.reset();
             loadSelcukData();
@@ -2477,7 +2530,12 @@
                 : `ID: ${finalInvoiceId}, Fatura No: ${invoiceData.invoiceNumber}`;
             
             await addLog(currentUser.email, 'Fatura Oluşturdu', logMessage);
-            
+            // İbrahim'e Mail At
+            await sendEmailNotification(
+                'ibrahim', 
+                'Yeni Fatura Onayı Bekliyor', 
+                `Mehmet tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
+            );
             const successMessage = linkedTransactionId
                 ? `✅ Fatura başarıyla oluşturuldu!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`
                 : `✅ Fatura başarıyla oluşturuldu!\n\nFatura ID: ${finalInvoiceId}`;
@@ -2522,7 +2580,12 @@
             await dbSet(newTransactionRef, transactionData);
             
             await addLog(currentUser.email, 'İşlem Oluşturdu', `ID: ${sixDigitId}, Ad Soyad: ${transactionData.customerName}, IMEI: ${transactionData.imeiNumber}`);
-            
+            // İbrahim'e Mail At
+            await sendEmailNotification(
+                'ibrahim', 
+                'Yeni İşlem Onayı Bekliyor', 
+                `Mehmet tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
+            );
             alert(`İşlem başarıyla oluşturuldu! ID: ${sixDigitId}`);
             event.target.reset();
             document.getElementById('serviceType').value = '';
@@ -2546,6 +2609,11 @@
                     });
                     
                     await addLog(currentUser.email, 'Fatura 1. Onayladı', `ID: ${invoice.customId}`);
+                    await sendEmailNotification(
+    'mahmut', 
+    '2. Onay (Ödeme) Bekleyen Fatura', 
+    `İbrahim faturayı onayladı. ${invoice.amount} TL tutarındaki faturanın ödemesi/muhasebe onayı bekleniyor. Fatura No: ${invoice.invoiceNumber}.`
+);
                     alert('Fatura 1. onay verildi! 2. Onay bekleniyor.');
                     loadIbrahimData();
                 }
@@ -2593,6 +2661,12 @@
                     });
                     
                     await addLog(currentUser.email, '1. Onay Verdi', `ID: ${transaction.customId}`);
+                    // Muhasebeye (Mahmut) Mail At
+await sendEmailNotification(
+    'mahmut', 
+    '2. Onay Bekleyen İşlem Kaydı', 
+    `İbrahim işlemi onayladı. ${transaction.amount} TL tutarındaki işlemin sisteme işlenmesi/onayı bekleniyor. Müşteri: ${transaction.customerName}.`
+);
                     alert('1. Onay verildi! 2. Onay bekleniyor.');
                     loadIbrahimData();
                 }
