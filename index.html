@@ -1954,7 +1954,7 @@
         // Mail Gönderme Yardımcı Fonksiyonu
 async function sendEmailNotification(toRole, subject, detailMsg) {
     const emails = {
-        'ibrahim': 'gokhan.karaboga@mobilfon.com', // Buraya test için kendi mailini yazabilirsin
+        'ibrahim': 'gokhan.karaboga@mobilfon.com', 
         'mahmut': ['yunus.ozden@mobilfon.com', 'reyhan.yakut@mobilfon.com']
     };
 
@@ -1968,21 +1968,25 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
     const emailList = Array.isArray(targetEmail) ? targetEmail : [targetEmail];
     
     for (const email of emailList) {
-        // EmailJS şablonundaki değişken isimleri bunlarla AYNISI olmalı
+        // EmailJS parametreleri
         const templateParams = {
-            to_email: email,   // Şablonda {{to_email}} olmalı
-            subject: subject,  // Şablonda {{subject}} olmalı
-            message: detailMsg // Şablonda {{message}} olmalı
+            to_email: email,
+            subject: subject,
+            message: detailMsg
         };
 
         try {
-            console.log('Mail gönderiliyor:', email, templateParams); 
-            // DÜZELTİLEN KISIM: service_bxuddpn ve template_jl5821o
+            console.log('Mail gönderiliyor:', email);
+            // BURAYA DİKKAT EDİN: Service ID ve Template ID doğru yerleşmeli
+            // 1. Parametre: Service ID (service_bxuddpn)
+            // 2. Parametre: Template ID (template_jl5821o)
             const response = await emailjs.send('service_bxuddpn', 'template_jl5821o', templateParams);
+            
             console.log('Mail başarıyla gönderildi!', response.status, response.text);
         } catch (error) {
             console.error('Mail gönderme hatası:', error);
-            alert(`Mail gönderilemedi. Hata: ${JSON.stringify(error)}`); 
+            // Hata detayını ekrana bas
+            alert(`Mail gönderilemedi. Hata: ${JSON.stringify(error)}`);
         }
     }
 }
