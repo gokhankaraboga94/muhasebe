@@ -1954,7 +1954,7 @@
         // Mail Gönderme Yardımcı Fonksiyonu
 async function sendEmailNotification(toRole, subject, detailMsg) {
     const emails = {
-        'ibrahim': 'gokhan.karaboga94@gmail.com',
+        'ibrahim': 'gokhan.karaboga@mobilfon.com', // Buraya test için kendi mailini yazabilirsin
         'mahmut': ['yunus.ozden@mobilfon.com', 'reyhan.yakut@mobilfon.com']
     };
 
@@ -1968,20 +1968,21 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
     const emailList = Array.isArray(targetEmail) ? targetEmail : [targetEmail];
     
     for (const email of emailList) {
+        // EmailJS şablonundaki değişken isimleri bunlarla AYNISI olmalı
         const templateParams = {
-            to_email: email,
-            subject: subject,
-            message: detailMsg
+            to_email: email,   // Şablonda {{to_email}} olmalı
+            subject: subject,  // Şablonda {{subject}} olmalı
+            message: detailMsg // Şablonda {{message}} olmalı
         };
 
         try {
-            console.log('Mail gönderiliyor:', email, templateParams); // DEBUG
-            const response = await emailjs.send('service_bxuddpn', 'template_7u5h8op', templateParams);
-            console.log('Mail gönderildi! Response:', response); // DEBUG
+            console.log('Mail gönderiliyor:', email, templateParams); 
+            // DÜZELTİLEN KISIM: service_bxuddpn ve template_jl5821o
+            const response = await emailjs.send('service_bxuddpn', 'template_jl5821o', templateParams);
+            console.log('Mail başarıyla gönderildi!', response.status, response.text);
         } catch (error) {
             console.error('Mail gönderme hatası:', error);
-            console.error('Error detayı:', error.text); // DETAYLI HATA
-            alert(`Mail gönderme hatası: ${error.text || error.message}`); // KULLANICIYA BİLDİR
+            alert(`Mail gönderilemedi. Hata: ${JSON.stringify(error)}`); 
         }
     }
 }
