@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -1953,7 +1954,7 @@
         // Mail Gönderme Yardımcı Fonksiyonu
 async function sendEmailNotification(toRole, subject, detailMsg) {
     const emails = {
-        'ibrahim': 'sinan.turkel@mobilfon.com',
+        'ibrahim': 'gokhan.karaboga@mobilfon.com',
         'mahmut': ['yunus.ozden@mobilfon.com', 'reyhan.yakut@mobilfon.com']
     };
 
@@ -1964,7 +1965,6 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         return;
     }
 
-    // Eğer targetEmail bir dizi ise, her birine mail gönder
     const emailList = Array.isArray(targetEmail) ? targetEmail : [targetEmail];
     
     for (const email of emailList) {
@@ -1975,10 +1975,13 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         };
 
         try {
-            await emailjs.send('service_bxuddpn', 'template_7u5h8op', templateParams);
-            console.log('Mail başarıyla gönderildi:', email);
+            console.log('Mail gönderiliyor:', email, templateParams); // DEBUG
+            const response = await emailjs.send('service_bxuddpn', 'template_7u5h8op', templateParams);
+            console.log('Mail gönderildi! Response:', response); // DEBUG
         } catch (error) {
             console.error('Mail gönderme hatası:', error);
+            console.error('Error detayı:', error.text); // DETAYLI HATA
+            alert(`Mail gönderme hatası: ${error.text || error.message}`); // KULLANICIYA BİLDİR
         }
     }
 }
