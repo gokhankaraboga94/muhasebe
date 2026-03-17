@@ -1007,7 +1007,9 @@
                                         <option value="admin">Admin (Tüm Yetkilere Sahip)</option>
                                         <option value="selcuk">Fatura Oluşturma Yetkisi (Selçuk gibi)</option>
                                         <option value="mehmet">İşlem ve Fatura Oluşturma Yetkisi (Mehmet gibi)</option>
+                                        <option value="magaza">Mağaza (Sadece İşlem Oluşturma)</option>
                                         <option value="ibrahim">1. Onay Yetkisi (İbrahim gibi)</option>
+                                        <option value="magaza_muduru">Mağaza Müdürü (Sadece Mağaza İşlemlerine 1. Onay)</option>
                                         <option value="mahmut">2. ve 3. Onay Yetkisi - Muhasebe (Mahmut gibi)</option>
                                        <option value="viewer">Görüntüleyici (Samil)</option>
                                         <option value="viewer">Sadece Görüntüleyici (Salt Okunur)</option>
@@ -1292,8 +1294,8 @@
                     <div class="tabs">
                         <button class="tab active" onclick="switchTab('createTransaction')">İşlem Oluştur</button>
                         <button class="tab" onclick="switchTab('myTransactions')">İşlemlerim</button>
-                        <button class="tab" onclick="switchTab('mehmetCreateInvoice')">Fatura Oluştur</button>
-                        <button class="tab" onclick="switchTab('mehmetMyInvoices')">Faturalarım</button>
+                        <button class="tab" id="mehmetInvoiceCreateTabBtn" onclick="switchTab('mehmetCreateInvoice')">Fatura Oluştur</button>
+                        <button class="tab" id="mehmetInvoiceListTabBtn" onclick="switchTab('mehmetMyInvoices')">Faturalarım</button>
                     </div>
 
                     <div id="createTransaction" class="tab-content active">
@@ -1542,8 +1544,8 @@
                     <div class="tabs">
                         <button class="tab active" onclick="switchTab('ibrahimPendingTab')">Bekleyen İşlemler</button>
                         <button class="tab" onclick="switchTab('ibrahimApprovedTab')">Onaylanan İşlemler</button>
-                        <button class="tab" onclick="switchTab('ibrahimInvoicesPendingTab')">Bekleyen Faturalar</button>
-                        <button class="tab" onclick="switchTab('ibrahimInvoicesApprovedTab')">Onaylanan Faturalar</button>
+                        <button class="tab" id="ibrahimInvoicesPendingTabBtn" onclick="switchTab('ibrahimInvoicesPendingTab')">Bekleyen Faturalar</button>
+                        <button class="tab" id="ibrahimInvoicesApprovedTabBtn" onclick="switchTab('ibrahimInvoicesApprovedTab')">Onaylanan Faturalar</button>
                     </div>
 
                     <div id="ibrahimPendingTab" class="tab-content active">
@@ -2443,6 +2445,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 'admin': 'Genel Admin',
                 'selcuk': 'Fatura Oluşturma',
                 'mehmet': 'İşlem ve Fatura Oluşturma',
+                'magaza': 'Mağaza',
+                'magaza_muduru': 'Mağaza Müdürü',
                 'mahmut': 'Muhasebe 2. ve 3. Onay',
                 'ibrahim': '1. Onay',
                 'viewer': 'Sadece Görüntüleyici'  // YENİ EKLENEN
@@ -2454,6 +2458,25 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
     ['adminDashboard', 'selcukDashboard', 'mehmetDashboard', 'mahmutDashboard', 'ibrahimDashboard', 'viewerDashboard'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
     });
+
+    const mehmetInvoiceCreateBtn = document.getElementById('mehmetInvoiceCreateTabBtn');
+    const mehmetInvoiceListBtn = document.getElementById('mehmetInvoiceListTabBtn');
+    const ibrahimInvPendingBtn = document.getElementById('ibrahimInvoicesPendingTabBtn');
+    const ibrahimInvApprovedBtn = document.getElementById('ibrahimInvoicesApprovedTabBtn');
+    const mehmetInvoiceCreateSection = document.getElementById('mehmetCreateInvoice');
+    const mehmetInvoiceListSection = document.getElementById('mehmetMyInvoices');
+    const ibrahimInvPendingSection = document.getElementById('ibrahimInvoicesPendingTab');
+    const ibrahimInvApprovedSection = document.getElementById('ibrahimInvoicesApprovedTab');
+
+    if (mehmetInvoiceCreateBtn) mehmetInvoiceCreateBtn.classList.remove('hidden');
+    if (mehmetInvoiceListBtn) mehmetInvoiceListBtn.classList.remove('hidden');
+    if (mehmetInvoiceCreateSection) mehmetInvoiceCreateSection.classList.remove('hidden');
+    if (mehmetInvoiceListSection) mehmetInvoiceListSection.classList.remove('hidden');
+
+    if (ibrahimInvPendingBtn) ibrahimInvPendingBtn.classList.remove('hidden');
+    if (ibrahimInvApprovedBtn) ibrahimInvApprovedBtn.classList.remove('hidden');
+    if (ibrahimInvPendingSection) ibrahimInvPendingSection.classList.remove('hidden');
+    if (ibrahimInvApprovedSection) ibrahimInvApprovedSection.classList.remove('hidden');
 
     switch(role) {
         case 'admin':
@@ -2471,12 +2494,30 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             loadStatusOptions();
             loadServiceTypes();
             break;
+        case 'magaza':
+            document.getElementById('mehmetDashboard').classList.remove('hidden');
+            if (mehmetInvoiceCreateBtn) mehmetInvoiceCreateBtn.classList.add('hidden');
+            if (mehmetInvoiceListBtn) mehmetInvoiceListBtn.classList.add('hidden');
+            if (mehmetInvoiceCreateSection) mehmetInvoiceCreateSection.classList.add('hidden');
+            if (mehmetInvoiceListSection) mehmetInvoiceListSection.classList.add('hidden');
+            loadMehmetData();
+            loadStatusOptions();
+            loadServiceTypes();
+            break;
         case 'mahmut':
             document.getElementById('mahmutDashboard').classList.remove('hidden');
             loadMahmutData();
             break;
         case 'ibrahim':
             document.getElementById('ibrahimDashboard').classList.remove('hidden');
+            loadIbrahimData();
+            break;
+        case 'magaza_muduru':
+            document.getElementById('ibrahimDashboard').classList.remove('hidden');
+            if (ibrahimInvPendingBtn) ibrahimInvPendingBtn.classList.add('hidden');
+            if (ibrahimInvApprovedBtn) ibrahimInvApprovedBtn.classList.add('hidden');
+            if (ibrahimInvPendingSection) ibrahimInvPendingSection.classList.add('hidden');
+            if (ibrahimInvApprovedSection) ibrahimInvApprovedSection.classList.add('hidden');
             loadIbrahimData();
             break;
         case 'viewer':  // YENİ EKLENEN
@@ -2500,6 +2541,11 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 
         window.createInvoice = async function(event) {
             event.preventDefault();
+
+            if (currentUserRole === 'magaza' || currentUserRole === 'magaza_muduru') {
+                alert('Bu kullanıcı rolü fatura oluşturamaz.');
+                return;
+            }
             
             const sixDigitId = generateSixDigitId();
             
@@ -2540,6 +2586,11 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 
         window.createInvoiceMehmet = async function(event) {
             event.preventDefault();
+
+            if (currentUserRole === 'magaza' || currentUserRole === 'magaza_muduru') {
+                alert('Bu kullanıcı rolü fatura oluşturamaz.');
+                return;
+            }
             
             const noteValue = document.getElementById('mehmetInvoiceNote').value.trim();
             let finalInvoiceId = generateSixDigitId();
@@ -2646,6 +2697,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
             
             const sixDigitId = generateSixDigitId();
+
+            const firstApproverRole = (currentUserRole === 'magaza') ? 'magaza_muduru' : 'ibrahim';
             
             const transactionData = {
                 customId: sixDigitId,
@@ -2659,9 +2712,11 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 paymentDate: document.getElementById('paymentDate').value || '',
                 status: '1. Onay Bekliyor',
                 approvalStage: 1,
+                firstApproverRole: firstApproverRole,
                 note: noteValue,
                 detail: document.getElementById('transDetail').value || '',
                 createdBy: currentUser.email,
+                createdByRole: currentUserRole,
                 createdAt: new Date().toISOString(),
                 timestamp: Date.now()
             };
@@ -2671,12 +2726,14 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             await dbSet(newTransactionRef, transactionData);
             
             await addLog(currentUser.email, 'İşlem Oluşturdu', `ID: ${sixDigitId}, Ad Soyad: ${transactionData.customerName}, IMEI: ${transactionData.imeiNumber}`);
-            // İbrahim'e Mail At
-            await sendEmailNotification(
-                'ibrahim', 
-                'Yeni İşlem Onayı Bekliyor', 
-                `Mehmet tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
-            );
+
+            if (firstApproverRole === 'ibrahim') {
+                await sendEmailNotification(
+                    'ibrahim', 
+                    'Yeni İşlem Onayı Bekliyor', 
+                    `${getRoleDisplayName(currentUserRole)} tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
+                );
+            }
             alert(`İşlem başarıyla oluşturuldu! ID: ${sixDigitId}`);
             event.target.reset();
             document.getElementById('serviceType').value = '';
@@ -2739,6 +2796,14 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             const transactionRef = dbRef(db, `transactions/${transactionId}`);
             const snapshot = await dbGet(transactionRef);
             const transaction = snapshot.val();
+
+            if (currentUserRole === 'magaza_muduru') {
+                const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
+                if (transactionApproverRole !== 'magaza_muduru') {
+                    alert('Bu işlem için onay yetkiniz yok.');
+                    return;
+                }
+            }
             
             showConfirmModal(
                 '1. Onay - İşlem',
@@ -2756,7 +2821,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 await sendEmailNotification(
     'mahmut', 
     '2. Onay Bekleyen İşlem Kaydı', 
-    `İbrahim işlemi onayladı. ${transaction.amount} TL tutarındaki işlemin sisteme işlenmesi/onayı bekleniyor. Müşteri: ${transaction.customerName}.`
+    `${getRoleDisplayName(currentUserRole)} işlemi onayladı. ${transaction.amount} TL tutarındaki işlemin sisteme işlenmesi/onayı bekleniyor. Müşteri: ${transaction.customerName}.`
 );
                     alert('1. Onay verildi! 2. Onay bekleniyor.');
                     loadIbrahimData();
@@ -3109,11 +3174,15 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const pendingTransactions = [];
                 const approvedTransactions = [];
 
+                const approverRole = (currentUserRole === 'magaza_muduru') ? 'magaza_muduru' : 'ibrahim';
+
                 snapshot.forEach((child) => {
                     const transaction = { id: child.key, ...child.val() };
                     allTransactions.push(transaction);
                     
-                    if (transaction.status === '1. Onay Bekliyor') {
+                    const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
+
+                    if (transaction.status === '1. Onay Bekliyor' && transactionApproverRole === approverRole) {
                         pendingTransactions.push(transaction);
                     } else if (transaction.firstApprovedBy === currentUser.email) {
                         approvedTransactions.push(transaction);
@@ -3154,6 +3223,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                     const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+                    const canDelete = currentUserRole !== 'magaza_muduru';
                     approvedTbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -3168,7 +3238,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
-                                <button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button>
+                                ${canDelete ? `<button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button>` : '<span style="color: #9ca3af; font-size: 12px;">-</span>'}
                             </td>
                         </tr>
                     `;
