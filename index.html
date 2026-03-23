@@ -2415,6 +2415,78 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             );
         };
 
+        window.rejectTransaction1 = async function(transactionId) {
+            const transactionRef = dbRef(db, `transactions/${transactionId}`);
+            const snapshot = await dbGet(transactionRef);
+            const transaction = snapshot.val();
+
+            if (currentUserRole === 'magaza_muduru') {
+                const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
+                if (transactionApproverRole !== 'magaza_muduru') {
+                    alert('Bu işlem için reddetme yetkiniz yok.');
+                    return;
+                }
+            }
+
+            const reasonInput = prompt('Reddetme nedeni (opsiyonel):');
+            const rejectReason = (reasonInput || '').trim();
+
+            showConfirmModal(
+                '1. Onay - İşlem Reddet',
+                `Ad Soyad: ${transaction.customerName}\nIMEI: ${transaction.imeiNumber}\nTutar: ${transaction.amount.toLocaleString('tr-TR')} ₺\nOluşturan: ${transaction.createdBy || '-'}\n\nBu işlemi reddetmek istediğinizden emin misiniz?`,
+                async () => {
+                    await dbUpdate(transactionRef, {
+                        status: 'Reddedildi',
+                        approvalStage: 1,
+                        firstRejectedBy: currentUser.email,
+                        firstRejectedAt: new Date().toISOString(),
+                        rejectReason: rejectReason
+                    });
+
+                    await addLog(
+                        currentUser.email,
+                        '1. Onay Reddetti',
+                        `ID: ${transaction.customId}, Oluşturan: ${transaction.createdBy || '-'}, Neden: ${rejectReason || '-'}`
+                    );
+
+                    alert('İşlem reddedildi.');
+                    loadIbrahimData();
+                }
+            );
+        };
+
+        window.rejectInvoice1 = async function(invoiceId) {
+            const invoiceRef = dbRef(db, `invoices/${invoiceId}`);
+            const snapshot = await dbGet(invoiceRef);
+            const invoice = snapshot.val();
+
+            const reasonInput = prompt('Reddetme nedeni (opsiyonel):');
+            const rejectReason = (reasonInput || '').trim();
+
+            showConfirmModal(
+                '1. Onay - Fatura Reddet',
+                `Fatura No: ${invoice.invoiceNumber}\nTutar: ${invoice.amount.toLocaleString('tr-TR')} ₺\nOluşturan: ${invoice.createdBy || '-'}\n\nBu faturayı reddetmek istediğinizden emin misiniz?`,
+                async () => {
+                    await dbUpdate(invoiceRef, {
+                        status: 'Reddedildi',
+                        approvalStage: 1,
+                        firstRejectedBy: currentUser.email,
+                        firstRejectedAt: new Date().toISOString(),
+                        rejectReason: rejectReason
+                    });
+
+                    await addLog(
+                        currentUser.email,
+                        'Fatura 1. Reddetti',
+                        `ID: ${invoice.customId}, Oluşturan: ${invoice.createdBy || '-'}, Neden: ${rejectReason || '-'}`
+                    );
+
+                    alert('Fatura reddedildi.');
+                    loadIbrahimData();
+                }
+            );
+        };
+
         window.logout = async function() {
             await addLog(currentUser.email, 'Çıkış Yaptı', 'Kullanıcı sistemden çıkış yaptı');
             await signOut(auth);
@@ -3212,7 +3284,10 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                             <td>${transaction.detail || '-'}</td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
-                                <button class="action-btn btn-success" onclick="approveTransaction1('${transaction.id}')">1. Onay Ver</button>
+                                <div class="action-buttons">
+                                    <button class="action-btn btn-success" onclick="approveTransaction1('${transaction.id}')">1. Onay Ver</button>
+                                    <button class="action-btn btn-danger" onclick="rejectTransaction1('${transaction.id}')">1. Reddet</button>
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -3280,7 +3355,10 @@ pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             <td>${invoice.createdBy}</td> <!-- OLUŞTURAN SÜTUNU DÜZELTİLDİ -->
             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
             <td>
-                <button class="action-btn btn-success" onclick="approveInvoice1('${invoice.id}')">1. Onay Ver</button>
+                <div class="action-buttons">
+                    <button class="action-btn btn-success" onclick="approveInvoice1('${invoice.id}')">1. Onay Ver</button>
+                    <button class="action-btn btn-danger" onclick="rejectInvoice1('${invoice.id}')">1. Reddet</button>
+                </div>
             </td>
         </tr>
     `;
