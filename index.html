@@ -235,7 +235,7 @@
         }
 
         .tab-content.active {
-            display: block;
+            display: block !important;
         }
 
         .card {
@@ -1723,10 +1723,10 @@
                     </div>
 
                     <div class="tabs">
-                        <button class="tab active" onclick="switchTab('ibrahimPendingTab')">Bekleyen İşlemler</button>
-                        <button class="tab" onclick="switchTab('ibrahimApprovedTab')">Onaylanan İşlemler</button>
-                        <button class="tab" id="ibrahimInvoicesPendingTabBtn" onclick="switchTab('ibrahimInvoicesPendingTab')">Bekleyen Faturalar</button>
-                        <button class="tab" id="ibrahimInvoicesApprovedTabBtn" onclick="switchTab('ibrahimInvoicesApprovedTab')">Onaylanan Faturalar</button>
+                        <button class="tab active" onclick="switchTab('ibrahimPendingTab', this)">Bekleyen İşlemler</button>
+                        <button class="tab" onclick="switchTab('ibrahimApprovedTab', this)">Onaylanan İşlemler</button>
+                        <button class="tab" id="ibrahimInvoicesPendingTabBtn" onclick="switchTab('ibrahimInvoicesPendingTab', this)">Bekleyen Faturalar</button>
+                        <button class="tab" id="ibrahimInvoicesApprovedTabBtn" onclick="switchTab('ibrahimInvoicesApprovedTab', this)">Onaylanan Faturalar</button>
                     </div>
 
                     <div id="ibrahimPendingTab" class="tab-content active">
@@ -2897,8 +2897,6 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
     const ibrahimInvApprovedBtn = document.getElementById('ibrahimInvoicesApprovedTabBtn');
     const mehmetInvoiceCreateSection = document.getElementById('mehmetCreateInvoice');
     const mehmetInvoiceListSection = document.getElementById('mehmetMyInvoices');
-    const ibrahimInvPendingSection = document.getElementById('ibrahimInvoicesPendingTab');
-    const ibrahimInvApprovedSection = document.getElementById('ibrahimInvoicesApprovedTab');
 
     if (mehmetInvoiceCreateBtn) mehmetInvoiceCreateBtn.classList.remove('hidden');
     if (mehmetInvoiceListBtn) mehmetInvoiceListBtn.classList.remove('hidden');
@@ -2907,8 +2905,6 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 
     if (ibrahimInvPendingBtn) ibrahimInvPendingBtn.classList.remove('hidden');
     if (ibrahimInvApprovedBtn) ibrahimInvApprovedBtn.classList.remove('hidden');
-    if (ibrahimInvPendingSection) ibrahimInvPendingSection.classList.remove('hidden');
-    if (ibrahimInvApprovedSection) ibrahimInvApprovedSection.classList.remove('hidden');
 
     switch(role) {
         case 'admin':
@@ -2962,8 +2958,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             document.getElementById('ibrahimDashboard').classList.remove('hidden');
             if (ibrahimInvPendingBtn) ibrahimInvPendingBtn.classList.add('hidden');
             if (ibrahimInvApprovedBtn) ibrahimInvApprovedBtn.classList.add('hidden');
-            if (ibrahimInvPendingSection) ibrahimInvPendingSection.classList.add('hidden');
-            if (ibrahimInvApprovedSection) ibrahimInvApprovedSection.classList.add('hidden');
+            resetDashboardTabs('ibrahimDashboard', 'ibrahimPendingTab');
             loadIbrahimData();
             break;
         case 'viewer':  // YENİ EKLENEN
@@ -3861,6 +3856,38 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             });
         }
 
+        const IBRAHIM_APPROVER_EMAILS = ['ibrahim@mobilfon.com', 'ibrahim.duz@mobilfon.com'];
+
+        function isIbrahimApproverEmail(email) {
+            return IBRAHIM_APPROVER_EMAILS.includes((email || '').toLowerCase());
+        }
+
+        function isApprovedByCurrentUser(record) {
+            const approver = (record.firstApprovedBy || '').toLowerCase();
+            const current = (currentUser.email || '').toLowerCase();
+            if (!approver) return false;
+            if (approver === current) return true;
+            if ((currentUserRole === 'ibrahim' || currentUserRole === 'magaza_muduru') && isIbrahimApproverEmail(approver)) {
+                return true;
+            }
+            return false;
+        }
+
+        function isIbrahimApprovedInvoice(invoice) {
+            if (isIbrahimPendingInvoice(invoice)) return false;
+            if (normalizeStatus(invoice.status) === 'Kadir Onayı Bekliyor') return false;
+            if (isApprovedByCurrentUser(invoice)) return true;
+
+            if (currentUserRole !== 'ibrahim' && currentUserRole !== 'magaza_muduru') return false;
+            if (invoice.firstApprovedBy) return false;
+
+            const stage = Number(invoice.approvalStage || 0);
+            const status = normalizeStatus(invoice.status);
+            return stage >= 2
+                && (invoice.firstApproverRole || 'ibrahim') === 'ibrahim'
+                && ['2. Onay Bekliyor', 'Onaylandı'].includes(status);
+        }
+
         function loadIbrahimData() {
             const transactionsRef = dbRef(db, 'transactions');
             const invoicesRef = dbRef(db, 'invoices');
@@ -3880,7 +3907,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
 
                     if (isIbrahimPendingTransaction(transaction, approverRole)) {
                         pendingTransactions.push(transaction);
-                    } else if (transaction.firstApprovedBy === currentUser.email) {
+                    } else if (isApprovedByCurrentUser(transaction)) {
                         approvedTransactions.push(transaction);
                     }
                 });
@@ -3957,7 +3984,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     
                     if (isIbrahimPendingInvoice(invoice)) {
                         pendingInvoices.push(invoice);
-                    } else if (invoice.firstApprovedBy === currentUser.email) {
+                    } else if (isIbrahimApprovedInvoice(invoice)) {
                         approvedInvoices.push(invoice);
                     }
                 });
@@ -3996,6 +4023,15 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const approvedInvoicesTbody = document.querySelector('#ibrahimInvoicesApprovedTable tbody');
                 if (approvedInvoicesTbody) {
                     approvedInvoicesTbody.innerHTML = '';
+                    if (approvedInvoices.length === 0) {
+                        approvedInvoicesTbody.innerHTML = `
+                            <tr>
+                                <td colspan="10" style="text-align:center; color:#6b7280; padding: 24px;">
+                                    Henüz 1. onay verdiğiniz fatura bulunmuyor.
+                                </td>
+                            </tr>
+                        `;
+                    }
                     approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                         const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
                         approvedInvoicesTbody.innerHTML += `
@@ -4603,10 +4639,37 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             dashboardRoot.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             dashboardRoot.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-            const btn = clickedBtn || (typeof event !== 'undefined' ? event.target : null);
+            let btn = clickedBtn;
+            if (!btn && typeof event !== 'undefined' && event.target) {
+                btn = event.target.closest('.tab') || event.target;
+            }
+            if (!btn) {
+                dashboardRoot.querySelectorAll('.tabs .tab').forEach(tab => {
+                    const onclick = tab.getAttribute('onclick') || '';
+                    if (onclick.includes(`'${tabName}'`) || onclick.includes(`"${tabName}"`)) {
+                        btn = tab;
+                    }
+                });
+            }
             if (btn) btn.classList.add('active');
+
+            tabContent.classList.remove('hidden');
             tabContent.classList.add('active');
+
+            applySearchToTabContent(tabContent);
         };
+
+        function applySearchToTabContent(tabContent) {
+            if (!tabContent) return;
+            const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            tabContent.querySelectorAll('table tbody tr').forEach(row => {
+                if (!searchTerm) {
+                    row.style.display = '';
+                    return;
+                }
+                row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+            });
+        }
 
         function resetDashboardTabs(dashboardId, defaultTabId) {
             const dashboardRoot = document.getElementById(dashboardId);
@@ -4616,17 +4679,31 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             dashboardRoot.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
             const defaultTab = document.getElementById(defaultTabId);
-            if (defaultTab) defaultTab.classList.add('active');
+            if (defaultTab) {
+                defaultTab.classList.remove('hidden');
+                defaultTab.classList.add('active');
+            }
 
-            const firstTabBtn = dashboardRoot.querySelector('.tabs .tab');
-            if (firstTabBtn) firstTabBtn.classList.add('active');
+            dashboardRoot.querySelectorAll('.tabs .tab').forEach(tab => {
+                const onclick = tab.getAttribute('onclick') || '';
+                if (onclick.includes(`'${defaultTabId}'`) || onclick.includes(`"${defaultTabId}"`)) {
+                    tab.classList.add('active');
+                }
+            });
         }
 
         window.searchRecords = function() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('table tbody tr').forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            const visibleDashboard = document.querySelector('[id$="Dashboard"]:not(.hidden)');
+            if (!visibleDashboard) return;
+
+            const activeTab = visibleDashboard.querySelector('.tab-content.active');
+            if (activeTab) {
+                applySearchToTabContent(activeTab);
+                return;
+            }
+
+            visibleDashboard.querySelectorAll('table tbody tr').forEach(row => {
+                row.style.display = '';
             });
         };
 
