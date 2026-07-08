@@ -866,6 +866,7 @@
                                             <th>Not</th>
                                             <th>Vade</th>
                                             <th>Oluşturan</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -896,6 +897,7 @@
                                             <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Oluşturan</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -923,6 +925,7 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Not/Maliyet</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                         </tr>
                                     </thead>
@@ -949,6 +952,7 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Not/Maliyet</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>3. Onay Tarihi</th>
                                         </tr>
@@ -1008,6 +1012,7 @@
                                         <option value="selcuk">Fatura Oluşturma Yetkisi (Selçuk gibi)</option>
                                         <option value="mehmet">İşlem ve Fatura Oluşturma Yetkisi (Mehmet gibi)</option>
                                         <option value="magaza">Mağaza (Sadece İşlem Oluşturma)</option>
+                                        <option value="kadir">Ön Onay Yetkisi (Kadir gibi)</option>
                                         <option value="ibrahim">1. Onay Yetkisi (İbrahim gibi)</option>
                                         <option value="magaza_muduru">Mağaza Müdürü (Sadece Mağaza İşlemlerine 1. Onay)</option>
                                         <option value="mahmut">2. ve 3. Onay Yetkisi - Muhasebe (Mahmut gibi)</option>
@@ -1106,6 +1111,7 @@
                             <th>Not</th>
                             <th>Vade</th> 
                             <th>Oluşturan</th>
+                            <th>Kadir Onayı</th>
                             <th>Durum</th>
                             <th>Son Güncelleme</th>
                         </tr>
@@ -1136,6 +1142,7 @@
                             <th>Ödeme Tarihi</th>
                             <th>Not/Maliyet</th>
                             <th>Oluşturan</th>
+                            <th>Kadir Onayı</th>
                             <th>Durum</th>
                             <th>Son Güncelleme</th>
                         </tr>
@@ -1216,7 +1223,8 @@
                             <div class="info-box">
                                 <h4>📋 Fatura Onay Akışı</h4>
                                 <p>Oluşturduğunuz faturalar şu adımlardan geçecektir:</p>
-                                <p><strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                                <p><strong>0. Adım:</strong> Kadir (Ön Onay)<br>
+                                <strong>1. Adım:</strong> İbrahim (1. Onay)<br>
                                 <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)</p>
                             </div>
                             <form onsubmit="createInvoice(event)">
@@ -1390,7 +1398,7 @@
                             </div>
                             <div class="info-box">
                                 <h4>✏️ Düzenleme Yetkisi</h4>
-                                <p>1.Onay tarafından henüz onaylanmamış işlemlerinizi düzenleyebilirsiniz. 1. onay verdikten sonra düzenleme yapılamaz.</p>
+                                <p>Kadir ve 1. Onay tarafından henüz onaylanmamış işlemlerinizi düzenleyebilirsiniz. 1. onay verdikten sonra düzenleme yapılamaz.</p>
                             </div>
                             <div class="table-container">
                                 <table id="mehmetTransactionsTable">
@@ -1426,10 +1434,11 @@
         <div class="info-box">
             <h4>📋 Fatura Onay Akışı</h4>
             <p>Oluşturduğunuz faturalar şu adımlardan geçecektir:</p>
-            <p><strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+            <p><strong>0. Adım:</strong> Kadir (Ön Onay)<br>
+            <strong>1. Adım:</strong> İbrahim (1. Onay)<br>
             <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
             <strong>Sonuç:</strong> Onaylanan faturalar otomatik olarak "Onaylananlar" listesine eklenir.</p>
-            <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> İbrahim onaylamadan önce faturalarınızı düzenleyebilirsiniz.</p>
+            <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> Kadir ve İbrahim onaylamadan önce faturalarınızı düzenleyebilirsiniz.</p>
         </div>
         <div class="info-box info-box-success">
             <h4>🔗 İşlem-Fatura Eşleştirme</h4>
@@ -1496,7 +1505,7 @@
                             </div>
                             <div class="info-box">
                                 <h4>✏️ Düzenleme Yetkisi</h4>
-                                <p>İbrahim tarafından henüz onaylanmamış faturalarınızı düzenleyebilirsiniz. İbrahim onay verdikten sonra düzenleme yapılamaz.</p>
+                                <p>Kadir ve İbrahim tarafından henüz onaylanmamış faturalarınızı düzenleyebilirsiniz. İbrahim onay verdikten sonra düzenleme yapılamaz.</p>
                             </div>
                             <div class="table-container">
                                 <table id="mehmetInvoicesTable">
@@ -1511,6 +1520,154 @@
                                              <th>Vade</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kadir Dashboard -->
+                <div id="kadirDashboard" class="hidden">
+                    <div class="grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="kadirPending">0</div>
+                            <div class="stat-label">Bekleyen İşlem</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="kadirApproved">0</div>
+                            <div class="stat-label">Onayladığım İşlem</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="kadirPendingInvoices">0</div>
+                            <div class="stat-label">Bekleyen Fatura</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="kadirApprovedInvoices">0</div>
+                            <div class="stat-label">Onayladığım Fatura</div>
+                        </div>
+                    </div>
+
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('kadirPendingTab')">Bekleyen İşlemler</button>
+                        <button class="tab" onclick="switchTab('kadirApprovedTab')">Onayladığım İşlemler</button>
+                        <button class="tab" onclick="switchTab('kadirInvoicesPendingTab')">Bekleyen Faturalar</button>
+                        <button class="tab" onclick="switchTab('kadirInvoicesApprovedTab')">Onayladığım Faturalar</button>
+                    </div>
+
+                    <div id="kadirPendingTab" class="tab-content active">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Ön Onay Bekleyen İşlemler</h2>
+                            </div>
+                            <div class="info-box">
+                                <h4>📋 Ön Onay</h4>
+                                <p>İbrahim onayına düşmeden önce "Onayladım" butonuna tıklayarak işlemi bir sonraki adıma gönderin.</p>
+                            </div>
+                            <div class="table-container">
+                                <table id="kadirPendingTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Ad Soyad</th>
+                                            <th>IMEI</th>
+                                            <th>TC No</th>
+                                            <th>Marka Model</th>
+                                            <th>Servis Türü</th>
+                                            <th>Tutar</th>
+                                            <th>Ödeme</th>
+                                            <th>Ödeme Tarihi</th>
+                                            <th>Not/Maliyet</th>
+                                            <th>Detay</th>
+                                            <th>Oluşturan</th>
+                                            <th>Durum</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="kadirApprovedTab" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Onayladığım İşlemler</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="kadirApprovedTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Ad Soyad</th>
+                                            <th>IMEI</th>
+                                            <th>TC No</th>
+                                            <th>Marka Model</th>
+                                            <th>Servis Türü</th>
+                                            <th>Tutar</th>
+                                            <th>Ödeme</th>
+                                            <th>Ödeme Tarihi</th>
+                                            <th>Not/Maliyet</th>
+                                            <th>Oluşturan</th>
+                                            <th>Durum</th>
+                                            <th>Onay Tarihi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="kadirInvoicesPendingTab" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Ön Onay Bekleyen Faturalar</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="kadirInvoicesPendingTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Fatura Tarihi</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Not</th>
+                                            <th>Vade</th>
+                                            <th>Oluşturan</th>
+                                            <th>Durum</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="kadirInvoicesApprovedTab" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Onayladığım Faturalar</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="kadirInvoicesApprovedTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Fatura Tarihi</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Not</th>
+                                            <th>Vade</th>
+                                            <th>Oluşturan</th>
+                                            <th>Durum</th>
+                                            <th>Onay Tarihi</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -1568,6 +1725,7 @@
                                             <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Detay</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1597,6 +1755,7 @@
                                             <th>Ödeme</th>
                                             <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1624,6 +1783,7 @@
                         <th>Not</th>
                         <th>Vade</th>
                         <th>Oluşturan</th>
+                        <th>Kadir Onayı</th>
                         <th>Durum</th>
                         <th>İşlemler</th>
                     </tr>
@@ -1651,6 +1811,7 @@
                         <th>Not</th>
                         <th>Vade</th>
                         <th>Oluşturan</th>
+                        <th>Kadir Onayı</th>
                         <th>Durum</th>
                     </tr>
                 </thead>
@@ -1706,6 +1867,7 @@
                                             <th>Not</th>
                                             <th>Vade</th> 
                                             <th>Oluşturan</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1736,6 +1898,7 @@
                                             <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
                                             <th>Detay</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1764,6 +1927,7 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Not/Maliyet</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1791,6 +1955,7 @@
                                             <th>Not</th>
                                             <th>Vade</th>
                                             <th>Oluşturan</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1820,6 +1985,7 @@
                                             <th>Ödeme</th>
                                             <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>İşlemler</th>
                                         </tr>
@@ -1847,6 +2013,7 @@
                                             <th>Servis Türü</th>
                                             <th>Tutar</th>
                                             <th>Not/Maliyet</th>
+                                            <th>Kadir Onayı</th>
                                             <th>Durum</th>
                                             <th>3. Onay Tarihi</th>
                                         </tr>
@@ -2030,6 +2197,7 @@
         // Mail Gönderme Yardımcı Fonksiyonu
 async function sendEmailNotification(toRole, subject, detailMsg) {
     const emails = {
+        'kadir': 'kadir.celik@mobilfon.com',
         'ibrahim': 'ibrahim.duz@mobilfon.com', 
         'mahmut': ['yunus.ozden@mobilfon.com', 'serkan.bacak@mobilfon.com', 'mehmet.gunaydin@mobilfon.com', 'kadir.celik@mobilfon.com', 'reyhan.yakut@mobilfon.com']
 
@@ -2092,11 +2260,27 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             'mehmet@mobilfon.com': 'mehmet',
             'muhasebe@mobilfon.com': 'mahmut',
             'ibrahim@mobilfon.com': 'ibrahim',
+            'kadir.celik@mobilfon.com': 'kadir',
             'samil@mobilfon.com': 'viewer'
         };
 
         function generateSixDigitId() {
             return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        function canEditBeforeFirstApproval(status) {
+            return status === 'Kadir Onayı Bekliyor' || status === '1. Onay Bekliyor';
+        }
+
+        function formatKadirApprovalCell(record) {
+            if (record.kadirApprovedBy) {
+                const date = record.kadirApprovedAt ? new Date(record.kadirApprovedAt).toLocaleString('tr-TR') : '';
+                return `<span class="badge badge-approved" title="${date}">✓ Kadir Onayladı</span><br><small style="color:#6b7280;">${date}</small>`;
+            }
+            if (record.status === 'Kadir Onayı Bekliyor') {
+                return '<span class="badge badge-pending">Kadir Onayı Bekliyor</span>';
+            }
+            return '<span style="color:#9ca3af;">-</span>';
         }
 
         // Modal Functions
@@ -2521,13 +2705,14 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 'magaza_muduru': 'Mağaza Müdürü',
                 'mahmut': 'Muhasebe 2. ve 3. Onay',
                 'ibrahim': '1. Onay',
+                'kadir': 'Ön Onay (Kadir)',
                 'viewer': 'Sadece Görüntüleyici'  // YENİ EKLENEN
             };
             return roleNames[role] || role;
         }
 
        function showDashboard(role) {
-    ['adminDashboard', 'selcukDashboard', 'mehmetDashboard', 'mahmutDashboard', 'ibrahimDashboard', 'viewerDashboard'].forEach(id => {
+    ['adminDashboard', 'selcukDashboard', 'mehmetDashboard', 'mahmutDashboard', 'kadirDashboard', 'ibrahimDashboard', 'viewerDashboard'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
     });
 
@@ -2580,6 +2765,10 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             document.getElementById('mahmutDashboard').classList.remove('hidden');
             loadMahmutData();
             break;
+        case 'kadir':
+            document.getElementById('kadirDashboard').classList.remove('hidden');
+            loadKadirData();
+            break;
         case 'ibrahim':
             document.getElementById('ibrahimDashboard').classList.remove('hidden');
             loadIbrahimData();
@@ -2629,8 +2818,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 company: document.getElementById('companyInfo').value,
                 note: document.getElementById('invoiceNote').value,
                   dueDate: document.getElementById('invoiceDueDate').value || '', // YENİ EKLENEN: Vade tarihi
-                status: '1. Onay Bekliyor',
-                approvalStage: 1,
+                status: 'Kadir Onayı Bekliyor',
+                approvalStage: 0,
                 createdBy: currentUser.email,
                 createdAt: new Date().toISOString(),
                 timestamp: Date.now()
@@ -2642,14 +2831,11 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             
             await addLog(currentUser.email, 'Fatura Oluşturdu', `ID: ${sixDigitId}, Fatura No: ${invoiceData.invoiceNumber}`);
             
-            // --- BURAYA EKLE (BAŞLANGIÇ) ---
-            // İbrahim'e Mail At
             await sendEmailNotification(
-                'ibrahim', 
-                'Yeni Fatura Onayı Bekliyor', 
+                'kadir', 
+                'Yeni Fatura - Kadir Onayı Bekliyor', 
                 `Selçuk tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
             );
-            // --- BURAYA EKLE (BİTİŞ) ---
 
             alert(`Fatura başarıyla oluşturuldu! ID: ${sixDigitId}`);
             event.target.reset();
@@ -2721,14 +2907,12 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 company: document.getElementById('mehmetCompanyInfo').value,
                 note: noteValue,
                 dueDate: document.getElementById('mehmetInvoiceDueDate').value || '', // YENİ EKLENEN: Vade tarihi
-                status: '1. Onay Bekliyor',
-                approvalStage: 1,
+                status: 'Kadir Onayı Bekliyor',
+                approvalStage: 0,
                 createdBy: currentUser.email,
                 createdAt: new Date().toISOString(),
                 timestamp: Date.now()
             };
-            
-            // Eğer işlem eşleştirmesi yapıldıysa, bunu kaydet
             if (linkedTransactionId) {
                 invoiceData.linkedTransactionId = linkedTransactionId;
                 invoiceData.linkedTransactionCustomId = finalInvoiceId;
@@ -2743,10 +2927,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 : `ID: ${finalInvoiceId}, Fatura No: ${invoiceData.invoiceNumber}`;
             
             await addLog(currentUser.email, 'Fatura Oluşturdu', logMessage);
-            // İbrahim'e Mail At
             await sendEmailNotification(
-                'ibrahim', 
-                'Yeni Fatura Onayı Bekliyor', 
+                'kadir', 
+                'Yeni Fatura - Kadir Onayı Bekliyor', 
                 `Mehmet tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
             );
             const successMessage = linkedTransactionId
@@ -2771,6 +2954,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             const sixDigitId = generateSixDigitId();
 
             const firstApproverRole = (currentUserRole === 'magaza') ? 'magaza_muduru' : 'ibrahim';
+            const needsKadirApproval = firstApproverRole === 'ibrahim';
             
             const transactionData = {
                 customId: sixDigitId,
@@ -2782,8 +2966,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 amount: parseFloat(document.getElementById('transAmount').value),
                 paymentMethod: document.getElementById('paymentMethod').value,
                 paymentDate: document.getElementById('paymentDate').value || '',
-                status: '1. Onay Bekliyor',
-                approvalStage: 1,
+                status: needsKadirApproval ? 'Kadir Onayı Bekliyor' : '1. Onay Bekliyor',
+                approvalStage: needsKadirApproval ? 0 : 1,
                 firstApproverRole: firstApproverRole,
                 note: noteValue,
                 detail: document.getElementById('transDetail').value || '',
@@ -2799,7 +2983,13 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             
             await addLog(currentUser.email, 'İşlem Oluşturdu', `ID: ${sixDigitId}, Ad Soyad: ${transactionData.customerName}, IMEI: ${transactionData.imeiNumber}`);
 
-            if (firstApproverRole === 'ibrahim') {
+            if (needsKadirApproval) {
+                await sendEmailNotification(
+                    'kadir', 
+                    'Yeni İşlem - Kadir Onayı Bekliyor', 
+                    `${getRoleDisplayName(currentUserRole)} tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
+                );
+            } else if (firstApproverRole === 'ibrahim') {
                 await sendEmailNotification(
                     'ibrahim', 
                     'Yeni İşlem Onayı Bekliyor', 
@@ -2810,6 +3000,62 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             event.target.reset();
             document.getElementById('serviceType').value = '';
             loadMehmetData();
+        };
+
+        window.approveKadirTransaction = async function(transactionId) {
+            const transactionRef = dbRef(db, `transactions/${transactionId}`);
+            const snapshot = await dbGet(transactionRef);
+            const transaction = snapshot.val();
+
+            showConfirmModal(
+                'Kadir Onayı - İşlem',
+                `ID: ${transaction.customId}\nMüşteri: ${transaction.customerName}\nTutar: ${transaction.amount.toLocaleString('tr-TR')} ₺\n\nOnayladım butonuna basarak İbrahim onayına göndermek istediğinizden emin misiniz?`,
+                async () => {
+                    await dbUpdate(transactionRef, {
+                        status: '1. Onay Bekliyor',
+                        approvalStage: 1,
+                        kadirApprovedBy: currentUser.email,
+                        kadirApprovedAt: new Date().toISOString()
+                    });
+
+                    await addLog(currentUser.email, 'Kadir Onayladı (İşlem)', `ID: ${transaction.customId}`);
+                    await sendEmailNotification(
+                        'ibrahim',
+                        'Yeni İşlem Onayı Bekliyor',
+                        `Kadir onayladı. ${getRoleDisplayName(transaction.createdByRole || 'mehmet')} tarafından ${transaction.amount} TL tutarında işlem İbrahim onayına düştü. Müşteri: ${transaction.customerName}.`
+                    );
+                    alert('Onayladım! İşlem İbrahim onayına gönderildi.');
+                    loadKadirData();
+                }
+            );
+        };
+
+        window.approveKadirInvoice = async function(invoiceId) {
+            const invoiceRef = dbRef(db, `invoices/${invoiceId}`);
+            const snapshot = await dbGet(invoiceRef);
+            const invoice = snapshot.val();
+
+            showConfirmModal(
+                'Kadir Onayı - Fatura',
+                `Fatura No: ${invoice.invoiceNumber}\nTutar: ${invoice.amount.toLocaleString('tr-TR')} ₺\n\nOnayladım butonuna basarak İbrahim onayına göndermek istediğinizden emin misiniz?`,
+                async () => {
+                    await dbUpdate(invoiceRef, {
+                        status: '1. Onay Bekliyor',
+                        approvalStage: 1,
+                        kadirApprovedBy: currentUser.email,
+                        kadirApprovedAt: new Date().toISOString()
+                    });
+
+                    await addLog(currentUser.email, 'Kadir Onayladı (Fatura)', `ID: ${invoice.customId}`);
+                    await sendEmailNotification(
+                        'ibrahim',
+                        'Yeni Fatura Onayı Bekliyor',
+                        `Kadir onayladı. ${invoice.createdBy} tarafından ${invoice.amount} TL tutarında fatura İbrahim onayına düştü. Fatura No: ${invoice.invoiceNumber}.`
+                    );
+                    alert('Onayladım! Fatura İbrahim onayına gönderildi.');
+                    loadKadirData();
+                }
+            );
         };
 
         window.approveInvoice1 = async function(invoiceId) {
@@ -2965,6 +3211,7 @@ await sendEmailNotification(
                     
                     if (currentUserRole === 'admin') loadAdminData();
                     else if (currentUserRole === 'mahmut') loadMahmutData();
+                    else if (currentUserRole === 'kadir') loadKadirData();
                     else if (currentUserRole === 'ibrahim') loadIbrahimData();
                 }
             );
@@ -2996,6 +3243,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             <td>${invoice.note || '-'}</td>
             <td>${invoice.dueDate || '-'}</td> <!-- VADE SÜTUNU DÜZELTİLDİ -->
             <td>${invoice.createdBy}</td>
+            <td>${formatKadirApprovalCell(invoice)}</td>
             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
             <td><button class="action-btn btn-danger" onclick="deleteRecord('invoices', '${invoice.id}')">Sil</button></td>
         </tr>
@@ -3040,6 +3288,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                             <td>${paymentDate}</td>
                             <td>${transaction.note || '-'}</td>
                             <td>${transaction.createdBy}</td>
+                            <td>${formatKadirApprovalCell(transaction)}</td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td><button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button></td>
                         </tr>
@@ -3060,6 +3309,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                            <td>${formatKadirApprovalCell(transaction)}</td>
                             <td><span class="badge badge-cost-pending">${transaction.status}</span></td>
                         </tr>
                     `;
@@ -3079,6 +3329,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                             <td>${transaction.serviceType || '-'}</td>
                             <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                            <td>${formatKadirApprovalCell(transaction)}</td>
                             <td><span class="badge badge-cost-paid">${transaction.status}</span></td>
                             <td>${transaction.thirdApprovedAt ? new Date(transaction.thirdApprovedAt).toLocaleString('tr-TR') : '-'}</td>
                         </tr>
@@ -3124,7 +3375,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
 const tbody = document.querySelector('#selcukInvoicesTable tbody');
 tbody.innerHTML = '';
 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-    const canEdit = invoice.status === '1. Onay Bekliyor';
+    const canEdit = canEditBeforeFirstApproval(invoice.status);
     const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
     tbody.innerHTML += `
         <tr>
@@ -3173,7 +3424,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     
                     pageTransactions.forEach(transaction => {
                         const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
-                        const canEdit = transaction.status === '1. Onay Bekliyor';
+                        const canEdit = canEditBeforeFirstApproval(transaction.status);
                         const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
                         tbody.innerHTML += `
                             <tr>
@@ -3216,7 +3467,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
               const tbody = document.querySelector('#mehmetInvoicesTable tbody');
 tbody.innerHTML = '';
 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-    const canEdit = invoice.status === '1. Onay Bekliyor';
+    const canEdit = canEditBeforeFirstApproval(invoice.status);
     const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
     tbody.innerHTML += `
         <tr>
@@ -3234,6 +3485,143 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
         </tr>
     `;
 });
+            });
+        }
+
+        function loadKadirData() {
+            const transactionsRef = dbRef(db, 'transactions');
+            const invoicesRef = dbRef(db, 'invoices');
+
+            dbOnValue(transactionsRef, (snapshot) => {
+                const pendingTransactions = [];
+                const approvedTransactions = [];
+
+                snapshot.forEach((child) => {
+                    const transaction = { id: child.key, ...child.val() };
+                    const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
+
+                    if (transaction.status === 'Kadir Onayı Bekliyor' && transactionApproverRole === 'ibrahim') {
+                        pendingTransactions.push(transaction);
+                    } else if (transaction.kadirApprovedBy === currentUser.email) {
+                        approvedTransactions.push(transaction);
+                    }
+                });
+
+                document.getElementById('kadirPending').textContent = pendingTransactions.length;
+                document.getElementById('kadirApproved').textContent = approvedTransactions.length;
+
+                const pendingTbody = document.querySelector('#kadirPendingTable tbody');
+                pendingTbody.innerHTML = '';
+                pendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+                    pendingTbody.innerHTML += `
+                        <tr>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                            <td>${transaction.customerName}</td>
+                            <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
+                            <td>${transaction.brandModel}</td>
+                            <td>${transaction.serviceType || '-'}</td>
+                            <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td>${transaction.paymentMethod}</td>
+                            <td>${paymentDate}</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                            <td>${transaction.detail || '-'}</td>
+                            <td>${transaction.createdBy}</td>
+                            <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
+                            <td>
+                                <button class="action-btn btn-success" onclick="approveKadirTransaction('${transaction.id}')">Onayladım</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                const approvedTbody = document.querySelector('#kadirApprovedTable tbody');
+                approvedTbody.innerHTML = '';
+                approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
+                    const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
+                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+                    const approvalDate = transaction.kadirApprovedAt ? new Date(transaction.kadirApprovedAt).toLocaleString('tr-TR') : '-';
+                    approvedTbody.innerHTML += `
+                        <tr>
+                            <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                            <td>${transaction.customerName}</td>
+                            <td>${transaction.imeiNumber}</td>
+                            <td>${transaction.tcNumber || '-'}</td>
+                            <td>${transaction.brandModel}</td>
+                            <td>${transaction.serviceType || '-'}</td>
+                            <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td>${transaction.paymentMethod}</td>
+                            <td>${paymentDate}</td>
+                            <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                            <td>${transaction.createdBy}</td>
+                            <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
+                            <td>${approvalDate}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            dbOnValue(invoicesRef, (snapshot) => {
+                const pendingInvoices = [];
+                const approvedInvoices = [];
+
+                snapshot.forEach((child) => {
+                    const invoice = { id: child.key, ...child.val() };
+
+                    if (invoice.status === 'Kadir Onayı Bekliyor') {
+                        pendingInvoices.push(invoice);
+                    } else if (invoice.kadirApprovedBy === currentUser.email) {
+                        approvedInvoices.push(invoice);
+                    }
+                });
+
+                document.getElementById('kadirPendingInvoices').textContent = pendingInvoices.length;
+                document.getElementById('kadirApprovedInvoices').textContent = approvedInvoices.length;
+
+                const pendingInvoicesTbody = document.querySelector('#kadirInvoicesPendingTable tbody');
+                pendingInvoicesTbody.innerHTML = '';
+                pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+                    pendingInvoicesTbody.innerHTML += `
+                        <tr>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                            <td>${invoice.invoiceNumber}</td>
+                            <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
+                            <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
+                            <td>${invoice.dueDate || '-'}</td>
+                            <td>${invoice.createdBy}</td>
+                            <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
+                            <td>
+                                <button class="action-btn btn-success" onclick="approveKadirInvoice('${invoice.id}')">Onayladım</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                const approvedInvoicesTbody = document.querySelector('#kadirInvoicesApprovedTable tbody');
+                approvedInvoicesTbody.innerHTML = '';
+                approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+                    const approvalDate = invoice.kadirApprovedAt ? new Date(invoice.kadirApprovedAt).toLocaleString('tr-TR') : '-';
+                    approvedInvoicesTbody.innerHTML += `
+                        <tr>
+                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                            <td>${invoice.invoiceNumber}</td>
+                            <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
+                            <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
+                            <td>${invoice.company}</td>
+                            <td>${invoice.note || '-'}</td>
+                            <td>${invoice.dueDate || '-'}</td>
+                            <td>${invoice.createdBy}</td>
+                            <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
+                            <td>${approvalDate}</td>
+                        </tr>
+                    `;
+                });
             });
         }
 
@@ -3282,6 +3670,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                             <td>${paymentDate}</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
                             <td>${transaction.detail || '-'}</td>
+                            <td>${formatKadirApprovalCell(transaction)}</td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
                                 <div class="action-buttons">
@@ -3311,6 +3700,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                             <td>${transaction.paymentMethod}</td>
                             <td>${paymentDate}</td>
                             <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                            <td>${formatKadirApprovalCell(transaction)}</td>
                             <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                             <td>
                                 ${canDelete ? `<button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button>` : '<span style="color: #9ca3af; font-size: 12px;">-</span>'}
@@ -3353,6 +3743,7 @@ pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             <td>${invoice.note || '-'}</td>
             <td>${invoice.dueDate || '-'}</td> <!-- VADE SÜTUNU DÜZELTİLDİ -->
             <td>${invoice.createdBy}</td> <!-- OLUŞTURAN SÜTUNU DÜZELTİLDİ -->
+            <td>${formatKadirApprovalCell(invoice)}</td>
             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
             <td>
                 <div class="action-buttons">
@@ -3378,6 +3769,7 @@ approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             <td>${invoice.note || '-'}</td>
             <td>${invoice.dueDate || '-'}</td> <!-- VADE SÜTUNU DÜZELTİLDİ -->
             <td>${invoice.createdBy}</td> <!-- OLUŞTURAN SÜTUNU DÜZELTİLDİ -->
+            <td>${formatKadirApprovalCell(invoice)}</td>
             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
         </tr>
     `;
@@ -3424,6 +3816,7 @@ function loadMahmutData() {
                     <td>${invoice.note || '-'}</td>
                     <td>${invoice.dueDate || '-'}</td>
                     <td>${invoice.createdBy}</td>
+                    <td>${formatKadirApprovalCell(invoice)}</td>
                     <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                     <td>
                         <div class="action-buttons">
@@ -3451,6 +3844,7 @@ function loadMahmutData() {
                     <td>${invoice.note || '-'}</td>
                     <td>${invoice.dueDate || '-'}</td>
                     <td>${invoice.createdBy}</td>
+                    <td>${formatKadirApprovalCell(invoice)}</td>
                     <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
                     <td>
                         <button class="action-btn btn-danger" onclick="deleteRecord('invoices', '${invoice.id}')">Sil</button>
@@ -3511,6 +3905,7 @@ function loadMahmutData() {
                     <td>${paymentDate}</td>
                     <td><div class="cost-info">${transaction.note || '-'}</div></td>
                     <td>${transaction.detail || '-'}</td>
+                    <td>${formatKadirApprovalCell(transaction)}</td>
                     <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                     <td>
                         <div class="action-buttons">
@@ -3536,6 +3931,7 @@ function loadMahmutData() {
                     <td>${transaction.serviceType || '-'}</td>
                     <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                     <td><div class="cost-info"><strong>Maliyet:</strong> ${transaction.note || 'Bilgi yok'}</div></td>
+                    <td>${formatKadirApprovalCell(transaction)}</td>
                     <td><span class="badge badge-cost-pending">${transaction.status}</span></td>
                     <td>
                         <div class="action-buttons">
@@ -3563,6 +3959,7 @@ function loadMahmutData() {
                     <td>${transaction.paymentMethod}</td>
                     <td>${paymentDate}</td>
                     <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                    <td>${formatKadirApprovalCell(transaction)}</td>
                     <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                     <td>
                         <button class="action-btn btn-danger" onclick="deleteRecord('transactions', '${transaction.id}')">Sil</button>
@@ -3585,6 +3982,7 @@ function loadMahmutData() {
                     <td>${transaction.serviceType || '-'}</td>
                     <td>${transaction.amount.toLocaleString('tr-TR')} ₺</td>
                     <td><div class="cost-info">${transaction.note || '-'}</div></td>
+                    <td>${formatKadirApprovalCell(transaction)}</td>
                     <td><span class="badge badge-cost-paid">${transaction.status}</span></td>
                     <td>${transaction.thirdApprovedAt ? new Date(transaction.thirdApprovedAt).toLocaleString('tr-TR') : '-'}</td>
                 </tr>
@@ -3622,6 +4020,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             <td>${invoice.note || '-'}</td>
             <td>${invoice.dueDate || '-'}</td> <!-- VADE SÜTUNU DÜZELTİLDİ -->
             <td>${invoice.createdBy}</td>
+            <td>${formatKadirApprovalCell(invoice)}</td>
             <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
             <td>${lastEdited}</td>
         </tr>
@@ -3670,6 +4069,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     <td>${paymentDate}</td>
                     <td><div class="cost-info">${transaction.note || '-'}</div></td>
                     <td>${transaction.createdBy}</td>
+                    <td>${formatKadirApprovalCell(transaction)}</td>
                     <td><span class="badge ${getStatusBadge(transaction.status)}">${transaction.status}</span></td>
                     <td>${lastEdited}</td>
                 </tr>
@@ -3857,6 +4257,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
         };
 
         function getStatusBadge(status) {
+            if (status === 'Kadir Onayı Bekliyor') return 'badge-pending';
             if (status === '1. Onay Bekliyor') return 'badge-pending';
             if (status === '2. Onay Bekliyor') return 'badge-progress';
             if (status === 'Maliyet Onayı Bekliyor') return 'badge-cost-pending';
