@@ -1311,6 +1311,15 @@
                             <div class="card-header">
                                 <h2 class="card-title">Yeni İşlem Oluştur</h2>
                             </div>
+                            <div id="transactionKadirInfoBox" class="info-box">
+                                <h4>📋 İşlem Onay Akışı</h4>
+                                <p>Oluşturduğunuz işlemler şu adımlardan geçecektir:</p>
+                                <p><strong>0. Adım:</strong> Kadir (Ön Onay)<br>
+                                <strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                                <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
+                                <strong>3. Adım:</strong> Maliyet Onayı</p>
+                                <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> Kadir ve İbrahim onaylamadan önce işlemlerinizi düzenleyebilirsiniz.</p>
+                            </div>
                             <form onsubmit="createTransaction(event)">
                                 <div class="row">
                                     <div class="col">
@@ -2272,6 +2281,21 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             return status === 'Kadir Onayı Bekliyor' || status === '1. Onay Bekliyor';
         }
 
+        function usesKadirPreApproval(userRole) {
+            return userRole !== 'magaza';
+        }
+
+        function getFirstApproverRole(userRole) {
+            return userRole === 'magaza' ? 'magaza_muduru' : 'ibrahim';
+        }
+
+        function canReachIbrahimApproval(record) {
+            const approverRole = record.firstApproverRole || 'ibrahim';
+            if (approverRole !== 'ibrahim') return true;
+            if (record.kadirApprovedBy) return true;
+            return record.requiresKadirApproval !== true;
+        }
+
         function formatKadirApprovalCell(record) {
             if (record.kadirApprovedBy) {
                 const date = record.kadirApprovedAt ? new Date(record.kadirApprovedAt).toLocaleString('tr-TR') : '';
@@ -2747,12 +2771,16 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             break;
         case 'mehmet':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
+            const transactionKadirInfo = document.getElementById('transactionKadirInfoBox');
+            if (transactionKadirInfo) transactionKadirInfo.classList.remove('hidden');
             loadMehmetData();
             loadStatusOptions();
             loadServiceTypes();
             break;
         case 'magaza':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
+            const transactionMagazaInfo = document.getElementById('transactionKadirInfoBox');
+            if (transactionMagazaInfo) transactionMagazaInfo.classList.add('hidden');
             if (mehmetInvoiceCreateBtn) mehmetInvoiceCreateBtn.classList.add('hidden');
             if (mehmetInvoiceListBtn) mehmetInvoiceListBtn.classList.add('hidden');
             if (mehmetInvoiceCreateSection) mehmetInvoiceCreateSection.classList.add('hidden');
@@ -2820,7 +2848,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                   dueDate: document.getElementById('invoiceDueDate').value || '', // YENİ EKLENEN: Vade tarihi
                 status: 'Kadir Onayı Bekliyor',
                 approvalStage: 0,
+                requiresKadirApproval: true,
                 createdBy: currentUser.email,
+                createdByRole: currentUserRole,
                 createdAt: new Date().toISOString(),
                 timestamp: Date.now()
             };
@@ -2834,7 +2864,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             await sendEmailNotification(
                 'kadir', 
                 'Yeni Fatura - Kadir Onayı Bekliyor', 
-                `Selçuk tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
+                `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
             );
 
             alert(`Fatura başarıyla oluşturuldu! ID: ${sixDigitId}`);
@@ -2909,7 +2939,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 dueDate: document.getElementById('mehmetInvoiceDueDate').value || '', // YENİ EKLENEN: Vade tarihi
                 status: 'Kadir Onayı Bekliyor',
                 approvalStage: 0,
+                requiresKadirApproval: true,
                 createdBy: currentUser.email,
+                createdByRole: currentUserRole,
                 createdAt: new Date().toISOString(),
                 timestamp: Date.now()
             };
@@ -2930,7 +2962,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             await sendEmailNotification(
                 'kadir', 
                 'Yeni Fatura - Kadir Onayı Bekliyor', 
-                `Mehmet tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
+                `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
             );
             const successMessage = linkedTransactionId
                 ? `✅ Fatura başarıyla oluşturuldu!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`
@@ -2953,8 +2985,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             
             const sixDigitId = generateSixDigitId();
 
-            const firstApproverRole = (currentUserRole === 'magaza') ? 'magaza_muduru' : 'ibrahim';
-            const needsKadirApproval = firstApproverRole === 'ibrahim';
+            const firstApproverRole = getFirstApproverRole(currentUserRole);
+            const needsKadirApproval = usesKadirPreApproval(currentUserRole);
             
             const transactionData = {
                 customId: sixDigitId,
@@ -2968,6 +3000,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 paymentDate: document.getElementById('paymentDate').value || '',
                 status: needsKadirApproval ? 'Kadir Onayı Bekliyor' : '1. Onay Bekliyor',
                 approvalStage: needsKadirApproval ? 0 : 1,
+                requiresKadirApproval: needsKadirApproval,
                 firstApproverRole: firstApproverRole,
                 note: noteValue,
                 detail: document.getElementById('transDetail').value || '',
@@ -2987,12 +3020,6 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 await sendEmailNotification(
                     'kadir', 
                     'Yeni İşlem - Kadir Onayı Bekliyor', 
-                    `${getRoleDisplayName(currentUserRole)} tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
-                );
-            } else if (firstApproverRole === 'ibrahim') {
-                await sendEmailNotification(
-                    'ibrahim', 
-                    'Yeni İşlem Onayı Bekliyor', 
                     `${getRoleDisplayName(currentUserRole)} tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
                 );
             }
@@ -3642,7 +3669,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     
                     const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
 
-                    if (transaction.status === '1. Onay Bekliyor' && transactionApproverRole === approverRole) {
+                    if (transaction.status === '1. Onay Bekliyor' && transactionApproverRole === approverRole && canReachIbrahimApproval(transaction)) {
                         pendingTransactions.push(transaction);
                     } else if (transaction.firstApprovedBy === currentUser.email) {
                         approvedTransactions.push(transaction);
@@ -3719,7 +3746,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     const invoice = { id: child.key, ...child.val() };
                     allInvoices.push(invoice);
                     
-                    if (invoice.status === '1. Onay Bekliyor') {
+                    if (invoice.status === '1. Onay Bekliyor' && canReachIbrahimApproval(invoice)) {
                         pendingInvoices.push(invoice);
                     } else if (invoice.firstApprovedBy === currentUser.email) {
                         approvedInvoices.push(invoice);
