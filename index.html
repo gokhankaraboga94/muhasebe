@@ -1275,6 +1275,10 @@
                             <div class="card-header">
                                 <h2 class="card-title">Oluşturduğum Faturalar</h2>
                             </div>
+                            <div class="info-box">
+                                <h4>ℹ️ Kadir Onayı</h4>
+                                <p>Kadir onayına gönderilen faturalar burada listelenmez. Kadir onayladıktan sonra burada görünür.</p>
+                            </div>
                             <div class="table-container">
                                 <table id="selcukInvoicesTable">
                                     <thead>
@@ -1409,6 +1413,10 @@
                                 <h4>✏️ Düzenleme Yetkisi</h4>
                                 <p>Kadir ve 1. Onay tarafından henüz onaylanmamış işlemlerinizi düzenleyebilirsiniz. 1. onay verdikten sonra düzenleme yapılamaz.</p>
                             </div>
+                            <div class="info-box">
+                                <h4>ℹ️ Kadir Onayı</h4>
+                                <p>Kadir onayına gönderilen işlemler burada listelenmez. Kadir onayladıktan sonra "1. Onay Bekliyor" durumunda burada görünür.</p>
+                            </div>
                             <div class="table-container">
                                 <table id="mehmetTransactionsTable">
                                     <thead>
@@ -1516,6 +1524,10 @@
                                 <h4>✏️ Düzenleme Yetkisi</h4>
                                 <p>Kadir ve İbrahim tarafından henüz onaylanmamış faturalarınızı düzenleyebilirsiniz. İbrahim onay verdikten sonra düzenleme yapılamaz.</p>
                             </div>
+                            <div class="info-box">
+                                <h4>ℹ️ Kadir Onayı</h4>
+                                <p>Kadir onayına gönderilen kayıtlar burada listelenmez. Kadir onayladıktan sonra "1. Onay Bekliyor" durumunda burada görünür.</p>
+                            </div>
                             <div class="table-container">
                                 <table id="mehmetInvoicesTable">
                                     <thead>
@@ -1540,6 +1552,9 @@
 
                 <!-- Kadir Dashboard -->
                 <div id="kadirDashboard" class="hidden">
+                    <div class="alert alert-info" style="margin-bottom: 20px;">
+                        <strong>Ön Onay Paneli:</strong> Mehmet ve diğer kullanıcıların oluşturduğu işlem/faturalar burada onaylanır. "Onayladım" butonuna basınca kayıt İbrahim'in 1. onayına düşer.
+                    </div>
                     <div class="grid">
                         <div class="stat-card">
                             <div class="stat-number" id="kadirPending">0</div>
@@ -2497,19 +2512,24 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         }
 
         async function getUserRole(email) {
+            const normalizedEmail = (email || '').toLowerCase();
+            if (normalizedEmail === 'kadir@mobilfon.com' || normalizedEmail === 'kadir.celik@mobilfon.com') {
+                return 'kadir';
+            }
+
             const usersRef = dbRef(db, 'users');
             const snapshot = await dbGet(usersRef);
             
             if (snapshot.exists()) {
                 const users = snapshot.val();
                 for (let uid in users) {
-                    if (users[uid].email === email) {
+                    if ((users[uid].email || '').toLowerCase() === normalizedEmail) {
                         return users[uid].role;
                     }
                 }
             }
             
-            return defaultUserRoles[email] || null;
+            return defaultUserRoles[normalizedEmail] || defaultUserRoles[email] || null;
         }
 
         window.login = async function(event) {
@@ -2795,6 +2815,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             break;
         case 'kadir':
             document.getElementById('kadirDashboard').classList.remove('hidden');
+            resetDashboardTabs('kadirDashboard', 'kadirPendingTab');
             loadKadirData();
             break;
         case 'ibrahim':
@@ -2812,6 +2833,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         case 'viewer':  // YENİ EKLENEN
             document.getElementById('viewerDashboard').classList.remove('hidden');
             loadViewerData();
+            break;
+        default:
+            alert('Hesabınıza tanımlı bir rol bulunamadı. Lütfen yönetici ile iletişime geçin.');
             break;
     }
 }
@@ -2867,7 +2891,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
             );
 
-            alert(`Fatura başarıyla oluşturuldu! ID: ${sixDigitId}`);
+            alert(`Fatura başarıyla oluşturuldu ve Kadir onayına gönderildi! ID: ${sixDigitId}`);
             event.target.reset();
             loadSelcukData();
         };
@@ -2965,8 +2989,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
             );
             const successMessage = linkedTransactionId
-                ? `✅ Fatura başarıyla oluşturuldu!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`
-                : `✅ Fatura başarıyla oluşturuldu!\n\nFatura ID: ${finalInvoiceId}`;
+                ? `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`
+                : `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}`;
             
             alert(successMessage);
             event.target.reset();
@@ -3023,7 +3047,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                     `${getRoleDisplayName(currentUserRole)} tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
                 );
             }
-            alert(`İşlem başarıyla oluşturuldu! ID: ${sixDigitId}`);
+            alert(`İşlem Kadir onayına gönderildi! ID: ${sixDigitId}`);
             event.target.reset();
             document.getElementById('serviceType').value = '';
             loadMehmetData();
@@ -3395,7 +3419,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const invoices = [];
                 snapshot.forEach((child) => {
                     const invoice = child.val();
-                    if (invoice.createdBy === currentUser.email) {
+                    if (invoice.createdBy === currentUser.email && invoice.status !== 'Kadir Onayı Bekliyor') {
                         invoices.push({ id: child.key, ...invoice });
                     }
                 });
@@ -3431,7 +3455,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const transactions = [];
                 snapshot.forEach((child) => {
                     const transaction = child.val();
-                    if (transaction.createdBy === currentUser.email) {
+                    if (transaction.createdBy === currentUser.email && transaction.status !== 'Kadir Onayı Bekliyor') {
                         transactions.push({ id: child.key, ...transaction });
                     }
                 });
@@ -3486,7 +3510,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const invoices = [];
                 snapshot.forEach((child) => {
                     const invoice = child.val();
-                    if (invoice.createdBy === currentUser.email) {
+                    if (invoice.createdBy === currentUser.email && invoice.status !== 'Kadir Onayı Bekliyor') {
                         invoices.push({ id: child.key, ...invoice });
                     }
                 });
@@ -3529,7 +3553,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
 
                     if (transaction.status === 'Kadir Onayı Bekliyor' && transactionApproverRole === 'ibrahim') {
                         pendingTransactions.push(transaction);
-                    } else if (transaction.kadirApprovedBy === currentUser.email) {
+                    } else if (transaction.kadirApprovedBy) {
                         approvedTransactions.push(transaction);
                     }
                 });
@@ -3599,7 +3623,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
 
                     if (invoice.status === 'Kadir Onayı Bekliyor') {
                         pendingInvoices.push(invoice);
-                    } else if (invoice.kadirApprovedBy === currentUser.email) {
+                    } else if (invoice.kadirApprovedBy) {
                         approvedInvoices.push(invoice);
                     }
                 });
@@ -4377,13 +4401,34 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             container.appendChild(paginationDiv);
         }
 
-        window.switchTab = function(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById(tabName).classList.add('active');
+        window.switchTab = function(tabName, clickedBtn) {
+            const tabContent = document.getElementById(tabName);
+            if (!tabContent) return;
+
+            const dashboardRoot = tabContent.closest('[id$="Dashboard"]');
+            if (!dashboardRoot) return;
+
+            dashboardRoot.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            dashboardRoot.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const btn = clickedBtn || (typeof event !== 'undefined' ? event.target : null);
+            if (btn) btn.classList.add('active');
+            tabContent.classList.add('active');
         };
+
+        function resetDashboardTabs(dashboardId, defaultTabId) {
+            const dashboardRoot = document.getElementById(dashboardId);
+            if (!dashboardRoot) return;
+
+            dashboardRoot.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            dashboardRoot.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const defaultTab = document.getElementById(defaultTabId);
+            if (defaultTab) defaultTab.classList.add('active');
+
+            const firstTabBtn = dashboardRoot.querySelector('.tabs .tab');
+            if (firstTabBtn) firstTabBtn.classList.add('active');
+        }
 
         window.searchRecords = function() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
