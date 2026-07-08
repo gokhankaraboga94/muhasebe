@@ -2284,6 +2284,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             'mehmet@mobilfon.com': 'mehmet',
             'muhasebe@mobilfon.com': 'mahmut',
             'ibrahim@mobilfon.com': 'ibrahim',
+            'ibrahim.duz@mobilfon.com': 'ibrahim',
             'kadir@mobilfon.com': 'kadir',
             'samil@mobilfon.com': 'viewer'
         };
@@ -2307,7 +2308,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         function canReachIbrahimApproval(record) {
             const approverRole = record.firstApproverRole || 'ibrahim';
             if (approverRole !== 'ibrahim') return true;
-            if (record.kadirApprovedBy) return true;
+            if (record.kadirApprovedBy || record.readyForIbrahimApproval) return true;
+            if (record.status === '1. Onay Bekliyor' && Number(record.approvalStage) >= 1) return true;
             return record.requiresKadirApproval !== true;
         }
 
@@ -2330,10 +2332,16 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             
             pendingAction = onConfirm;
             
-            document.getElementById('modalConfirmBtn').onclick = function() {
+            document.getElementById('modalConfirmBtn').onclick = async function() {
                 if (pendingAction) {
-                    pendingAction();
+                    const action = pendingAction;
                     pendingAction = null;
+                    try {
+                        await action();
+                    } catch (error) {
+                        console.error('Onay işlemi hatası:', error);
+                        alert(`İşlem tamamlanamadı: ${error.message || error}`);
+                    }
                 }
                 closeModal();
             };
@@ -2515,6 +2523,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             const normalizedEmail = (email || '').toLowerCase();
             if (normalizedEmail === 'kadir@mobilfon.com' || normalizedEmail === 'kadir.celik@mobilfon.com') {
                 return 'kadir';
+            }
+            if (normalizedEmail === 'ibrahim@mobilfon.com' || normalizedEmail === 'ibrahim.duz@mobilfon.com') {
+                return 'ibrahim';
             }
 
             const usersRef = dbRef(db, 'users');
@@ -3168,7 +3179,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                         status: '1. Onay Bekliyor',
                         approvalStage: 1,
                         kadirApprovedBy: currentUser.email,
-                        kadirApprovedAt: new Date().toISOString()
+                        kadirApprovedAt: new Date().toISOString(),
+                        requiresKadirApproval: false,
+                        readyForIbrahimApproval: true
                     });
 
                     await addLog(currentUser.email, 'Kadir Onayladı (İşlem)', `ID: ${transaction.customId}`);
@@ -3195,8 +3208,11 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                     await dbUpdate(invoiceRef, {
                         status: '1. Onay Bekliyor',
                         approvalStage: 1,
+                        firstApproverRole: 'ibrahim',
                         kadirApprovedBy: currentUser.email,
-                        kadirApprovedAt: new Date().toISOString()
+                        kadirApprovedAt: new Date().toISOString(),
+                        requiresKadirApproval: false,
+                        readyForIbrahimApproval: true
                     });
 
                     await addLog(currentUser.email, 'Kadir Onayladı (Fatura)', `ID: ${invoice.customId}`);
