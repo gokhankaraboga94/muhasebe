@@ -1413,7 +1413,7 @@
                                 <h4>✏️ Düzenleme Yetkisi</h4>
                                 <p>Kadir ve 1. Onay tarafından henüz onaylanmamış işlemlerinizi düzenleyebilirsiniz. 1. onay verdikten sonra düzenleme yapılamaz.</p>
                             </div>
-                            <div class="info-box">
+                            <div id="creatorKadirPendingTransactionInfo" class="info-box">
                                 <h4>ℹ️ Kadir Onayı</h4>
                                 <p>Kadir onayına gönderilen işlemler burada listelenmez. Kadir onayladıktan sonra "1. Onay Bekliyor" durumunda burada görünür.</p>
                             </div>
@@ -1448,7 +1448,7 @@
         <div class="card-header">
             <h2 class="card-title">Yeni Fatura Oluştur</h2>
         </div>
-        <div class="info-box">
+        <div id="mehmetInvoiceFlowInfo" class="info-box">
             <h4>📋 Fatura Onay Akışı</h4>
             <p>Oluşturduğunuz faturalar şu adımlardan geçecektir:</p>
             <p><strong>0. Adım:</strong> Kadir (Ön Onay)<br>
@@ -1524,7 +1524,7 @@
                                 <h4>✏️ Düzenleme Yetkisi</h4>
                                 <p>Kadir ve İbrahim tarafından henüz onaylanmamış faturalarınızı düzenleyebilirsiniz. İbrahim onay verdikten sonra düzenleme yapılamaz.</p>
                             </div>
-                            <div class="info-box">
+                            <div id="creatorKadirPendingInvoiceInfo" class="info-box">
                                 <h4>ℹ️ Kadir Onayı</h4>
                                 <p>Kadir onayına gönderilen kayıtlar burada listelenmez. Kadir onayladıktan sonra "1. Onay Bekliyor" durumunda burada görünür.</p>
                             </div>
@@ -1553,7 +1553,7 @@
                 <!-- Kadir Dashboard -->
                 <div id="kadirDashboard" class="hidden">
                     <div class="alert alert-info" style="margin-bottom: 20px;">
-                        <strong>Ön Onay Paneli:</strong> Mehmet ve diğer kullanıcıların oluşturduğu işlem/faturalar burada onaylanır. "Onayladım" butonuna basınca kayıt İbrahim'in 1. onayına düşer.
+                        <strong>Ön Onay Paneli:</strong> Mehmet gibi kullanıcıların oluşturduğu işlem/faturalar burada onaylanır. Kendi oluşturduklarınız burada görünmez; onlar doğrudan İbrahim onayına gider.
                     </div>
                     <div class="grid">
                         <div class="stat-card">
@@ -2297,7 +2297,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         }
 
         function usesKadirPreApproval(userRole) {
-            return userRole !== 'magaza';
+            return userRole !== 'magaza' && userRole !== 'kadir';
         }
 
         function getFirstApproverRole(userRole) {
@@ -2395,7 +2395,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             alert('İşlem başarıyla güncellendi!');
             closeEditTransactionModal();
             
-            if (currentUserRole === 'mehmet') {
+            if (currentUserRole === 'mehmet' || currentUserRole === 'kadir' || currentUserRole === 'magaza') {
                 loadMehmetData();
             } else if (currentUserRole === 'selcuk') {
                 loadSelcukData();
@@ -2445,7 +2445,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             alert('Fatura başarıyla güncellendi!');
             closeEditInvoiceModal();
             
-            if (currentUserRole === 'mehmet') {
+            if (currentUserRole === 'mehmet' || currentUserRole === 'kadir' || currentUserRole === 'magaza') {
                 loadMehmetData();
             } else if (currentUserRole === 'selcuk') {
                 loadSelcukData();
@@ -2749,10 +2749,75 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 'magaza_muduru': 'Mağaza Müdürü',
                 'mahmut': 'Muhasebe 2. ve 3. Onay',
                 'ibrahim': '1. Onay',
-                'kadir': 'Ön Onay (Kadir)',
+                'kadir': 'Ön Onay + İşlem ve Fatura Oluşturma',
                 'viewer': 'Sadece Görüntüleyici'  // YENİ EKLENEN
             };
             return roleNames[role] || role;
+        }
+
+        function updateCreatorPanelForRole(role) {
+            const hideOthersPendingInfo = role === 'kadir';
+            const invoiceInfo = document.getElementById('creatorKadirPendingInvoiceInfo');
+            const transactionInfo = document.getElementById('creatorKadirPendingTransactionInfo');
+            if (invoiceInfo) invoiceInfo.classList.toggle('hidden', hideOthersPendingInfo);
+            if (transactionInfo) transactionInfo.classList.toggle('hidden', hideOthersPendingInfo);
+
+            const transactionFlowInfo = document.getElementById('transactionKadirInfoBox');
+            if (transactionFlowInfo) {
+                if (role === 'kadir') {
+                    transactionFlowInfo.innerHTML = `
+                        <h4>📋 İşlem Onay Akışı (Kendi Kayıtlarınız)</h4>
+                        <p>Oluşturduğunuz işlemler doğrudan İbrahim onayına gider:</p>
+                        <p><strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                        <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
+                        <strong>3. Adım:</strong> Maliyet Onayı</p>
+                    `;
+                } else if (role === 'magaza') {
+                    transactionFlowInfo.classList.add('hidden');
+                } else {
+                    transactionFlowInfo.classList.remove('hidden');
+                    transactionFlowInfo.innerHTML = `
+                        <h4>📋 İşlem Onay Akışı</h4>
+                        <p>Oluşturduğunuz işlemler şu adımlardan geçecektir:</p>
+                        <p><strong>0. Adım:</strong> Kadir (Ön Onay)<br>
+                        <strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                        <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
+                        <strong>3. Adım:</strong> Maliyet Onayı</p>
+                        <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> Kadir ve İbrahim onaylamadan önce işlemlerinizi düzenleyebilirsiniz.</p>
+                    `;
+                }
+            }
+
+            const invoiceFlowInfo = document.getElementById('mehmetInvoiceFlowInfo');
+            if (invoiceFlowInfo) {
+                if (role === 'kadir') {
+                    invoiceFlowInfo.innerHTML = `
+                        <h4>📋 Fatura Onay Akışı (Kendi Kayıtlarınız)</h4>
+                        <p>Oluşturduğunuz faturalar doğrudan İbrahim onayına gider:</p>
+                        <p><strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                        <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)</p>
+                        <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> İbrahim onaylamadan önce faturalarınızı düzenleyebilirsiniz.</p>
+                    `;
+                } else {
+                    invoiceFlowInfo.innerHTML = `
+                        <h4>📋 Fatura Onay Akışı</h4>
+                        <p>Oluşturduğunuz faturalar şu adımlardan geçecektir:</p>
+                        <p><strong>0. Adım:</strong> Kadir (Ön Onay)<br>
+                        <strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                        <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
+                        <strong>Sonuç:</strong> Onaylanan faturalar otomatik olarak "Onaylananlar" listesine eklenir.</p>
+                        <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> Kadir ve İbrahim onaylamadan önce faturalarınızı düzenleyebilirsiniz.</p>
+                    `;
+                }
+            }
+        }
+
+        function reloadCreatorData() {
+            if (currentUserRole === 'kadir' || currentUserRole === 'mehmet' || currentUserRole === 'magaza') {
+                loadMehmetData();
+            }
+            if (currentUserRole === 'selcuk') loadSelcukData();
+            if (currentUserRole === 'kadir') loadKadirData();
         }
 
        function showDashboard(role) {
@@ -2791,16 +2856,14 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             break;
         case 'mehmet':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
-            const transactionKadirInfo = document.getElementById('transactionKadirInfoBox');
-            if (transactionKadirInfo) transactionKadirInfo.classList.remove('hidden');
+            updateCreatorPanelForRole('mehmet');
             loadMehmetData();
             loadStatusOptions();
             loadServiceTypes();
             break;
         case 'magaza':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
-            const transactionMagazaInfo = document.getElementById('transactionKadirInfoBox');
-            if (transactionMagazaInfo) transactionMagazaInfo.classList.add('hidden');
+            updateCreatorPanelForRole('magaza');
             if (mehmetInvoiceCreateBtn) mehmetInvoiceCreateBtn.classList.add('hidden');
             if (mehmetInvoiceListBtn) mehmetInvoiceListBtn.classList.add('hidden');
             if (mehmetInvoiceCreateSection) mehmetInvoiceCreateSection.classList.add('hidden');
@@ -2814,9 +2877,15 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             loadMahmutData();
             break;
         case 'kadir':
+            document.getElementById('mehmetDashboard').classList.remove('hidden');
             document.getElementById('kadirDashboard').classList.remove('hidden');
+            updateCreatorPanelForRole('kadir');
+            resetDashboardTabs('mehmetDashboard', 'createTransaction');
             resetDashboardTabs('kadirDashboard', 'kadirPendingTab');
+            loadMehmetData();
             loadKadirData();
+            loadStatusOptions();
+            loadServiceTypes();
             break;
         case 'ibrahim':
             document.getElementById('ibrahimDashboard').classList.remove('hidden');
@@ -2861,6 +2930,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
             
             const sixDigitId = generateSixDigitId();
+            const needsKadirApproval = usesKadirPreApproval(currentUserRole);
             
             const invoiceData = {
                 customId: sixDigitId,
@@ -2870,9 +2940,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 company: document.getElementById('companyInfo').value,
                 note: document.getElementById('invoiceNote').value,
                   dueDate: document.getElementById('invoiceDueDate').value || '', // YENİ EKLENEN: Vade tarihi
-                status: 'Kadir Onayı Bekliyor',
-                approvalStage: 0,
-                requiresKadirApproval: true,
+                status: needsKadirApproval ? 'Kadir Onayı Bekliyor' : '1. Onay Bekliyor',
+                approvalStage: needsKadirApproval ? 0 : 1,
+                requiresKadirApproval: needsKadirApproval,
                 createdBy: currentUser.email,
                 createdByRole: currentUserRole,
                 createdAt: new Date().toISOString(),
@@ -2885,15 +2955,25 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             
             await addLog(currentUser.email, 'Fatura Oluşturdu', `ID: ${sixDigitId}, Fatura No: ${invoiceData.invoiceNumber}`);
             
-            await sendEmailNotification(
-                'kadir', 
-                'Yeni Fatura - Kadir Onayı Bekliyor', 
-                `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
-            );
+            if (needsKadirApproval) {
+                await sendEmailNotification(
+                    'kadir', 
+                    'Yeni Fatura - Kadir Onayı Bekliyor', 
+                    `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
+                );
+            } else {
+                await sendEmailNotification(
+                    'ibrahim',
+                    'Yeni Fatura Onayı Bekliyor',
+                    `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
+                );
+            }
 
-            alert(`Fatura başarıyla oluşturuldu ve Kadir onayına gönderildi! ID: ${sixDigitId}`);
+            alert(needsKadirApproval
+                ? `Fatura Kadir onayına gönderildi! ID: ${sixDigitId}`
+                : `Fatura İbrahim onayına gönderildi! ID: ${sixDigitId}`);
             event.target.reset();
-            loadSelcukData();
+            reloadCreatorData();
         };
 
         window.createInvoiceMehmet = async function(event) {
@@ -2953,6 +3033,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 }
             }
             
+            const needsKadirApproval = usesKadirPreApproval(currentUserRole);
+
             const invoiceData = {
                 customId: finalInvoiceId,
                 invoiceNumber: document.getElementById('mehmetInvoiceNumber').value,
@@ -2961,9 +3043,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 company: document.getElementById('mehmetCompanyInfo').value,
                 note: noteValue,
                 dueDate: document.getElementById('mehmetInvoiceDueDate').value || '', // YENİ EKLENEN: Vade tarihi
-                status: 'Kadir Onayı Bekliyor',
-                approvalStage: 0,
-                requiresKadirApproval: true,
+                status: needsKadirApproval ? 'Kadir Onayı Bekliyor' : '1. Onay Bekliyor',
+                approvalStage: needsKadirApproval ? 0 : 1,
+                requiresKadirApproval: needsKadirApproval,
                 createdBy: currentUser.email,
                 createdByRole: currentUserRole,
                 createdAt: new Date().toISOString(),
@@ -2983,18 +3065,30 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 : `ID: ${finalInvoiceId}, Fatura No: ${invoiceData.invoiceNumber}`;
             
             await addLog(currentUser.email, 'Fatura Oluşturdu', logMessage);
-            await sendEmailNotification(
-                'kadir', 
-                'Yeni Fatura - Kadir Onayı Bekliyor', 
-                `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
-            );
+            if (needsKadirApproval) {
+                await sendEmailNotification(
+                    'kadir', 
+                    'Yeni Fatura - Kadir Onayı Bekliyor', 
+                    `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
+                );
+            } else {
+                await sendEmailNotification(
+                    'ibrahim',
+                    'Yeni Fatura Onayı Bekliyor',
+                    `${getRoleDisplayName(currentUserRole)} tarafından ${invoiceData.amount} TL tutarında yeni bir fatura oluşturuldu. Fatura No: ${invoiceData.invoiceNumber}. Lütfen sisteme girip onaylayınız.`
+                );
+            }
             const successMessage = linkedTransactionId
-                ? `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`
-                : `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}`;
+                ? (needsKadirApproval
+                    ? `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`
+                    : `✅ Fatura İbrahim onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`)
+                : (needsKadirApproval
+                    ? `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}`
+                    : `✅ Fatura İbrahim onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}`);
             
             alert(successMessage);
             event.target.reset();
-            loadMehmetData();
+            reloadCreatorData();
         };
 
         window.createTransaction = async function(event) {
@@ -3046,11 +3140,19 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                     'Yeni İşlem - Kadir Onayı Bekliyor', 
                     `${getRoleDisplayName(currentUserRole)} tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
                 );
+            } else if (firstApproverRole === 'ibrahim') {
+                await sendEmailNotification(
+                    'ibrahim',
+                    'Yeni İşlem Onayı Bekliyor',
+                    `${getRoleDisplayName(currentUserRole)} tarafından ${transactionData.amount} TL tutarında yeni bir servis işlemi oluşturuldu. Müşteri: ${transactionData.customerName}. Lütfen sisteme girip onaylayınız.`
+                );
             }
-            alert(`İşlem Kadir onayına gönderildi! ID: ${sixDigitId}`);
+            alert(needsKadirApproval
+                ? `İşlem Kadir onayına gönderildi! ID: ${sixDigitId}`
+                : `İşlem İbrahim onayına gönderildi! ID: ${sixDigitId}`);
             event.target.reset();
             document.getElementById('serviceType').value = '';
-            loadMehmetData();
+            reloadCreatorData();
         };
 
         window.approveKadirTransaction = async function(transactionId) {
@@ -3419,7 +3521,10 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const invoices = [];
                 snapshot.forEach((child) => {
                     const invoice = child.val();
-                    if (invoice.createdBy === currentUser.email && invoice.status !== 'Kadir Onayı Bekliyor') {
+                    if (invoice.createdBy === currentUser.email) {
+                        if (currentUserRole !== 'kadir' && invoice.status === 'Kadir Onayı Bekliyor') {
+                            return;
+                        }
                         invoices.push({ id: child.key, ...invoice });
                     }
                 });
@@ -3455,7 +3560,10 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const transactions = [];
                 snapshot.forEach((child) => {
                     const transaction = child.val();
-                    if (transaction.createdBy === currentUser.email && transaction.status !== 'Kadir Onayı Bekliyor') {
+                    if (transaction.createdBy === currentUser.email) {
+                        if (currentUserRole !== 'kadir' && transaction.status === 'Kadir Onayı Bekliyor') {
+                            return;
+                        }
                         transactions.push({ id: child.key, ...transaction });
                     }
                 });
@@ -3510,7 +3618,10 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const invoices = [];
                 snapshot.forEach((child) => {
                     const invoice = child.val();
-                    if (invoice.createdBy === currentUser.email && invoice.status !== 'Kadir Onayı Bekliyor') {
+                    if (invoice.createdBy === currentUser.email) {
+                        if (currentUserRole !== 'kadir' && invoice.status === 'Kadir Onayı Bekliyor') {
+                            return;
+                        }
                         invoices.push({ id: child.key, ...invoice });
                     }
                 });
@@ -3551,7 +3662,9 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     const transaction = { id: child.key, ...child.val() };
                     const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
 
-                    if (transaction.status === 'Kadir Onayı Bekliyor' && transactionApproverRole === 'ibrahim') {
+                    if (transaction.status === 'Kadir Onayı Bekliyor'
+                        && transactionApproverRole === 'ibrahim'
+                        && transaction.createdBy !== currentUser.email) {
                         pendingTransactions.push(transaction);
                     } else if (transaction.kadirApprovedBy) {
                         approvedTransactions.push(transaction);
@@ -3621,7 +3734,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 snapshot.forEach((child) => {
                     const invoice = { id: child.key, ...child.val() };
 
-                    if (invoice.status === 'Kadir Onayı Bekliyor') {
+                    if (invoice.status === 'Kadir Onayı Bekliyor' && invoice.createdBy !== currentUser.email) {
                         pendingInvoices.push(invoice);
                     } else if (invoice.kadirApprovedBy) {
                         approvedInvoices.push(invoice);
