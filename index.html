@@ -1795,55 +1795,56 @@
                             <div class="card-header">
                                 <h2 class="card-title">1. Onay Bekleyen Faturalar</h2>
                             </div>
-                             <div class="table-container">
-            <table id="ibrahimInvoicesPendingTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Fatura No</th>
-                        <th>Fatura Tarihi</th>
-                        <th>Tutar</th>
-                        <th>Firma</th>
-                        <th>Not</th>
-                        <th>Vade</th>
-                        <th>Oluşturan</th>
-                        <th>Kadir Onayı</th>
-                        <th>Durum</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
-</div>
+                            <div class="table-container">
+                                <table id="ibrahimInvoicesPendingTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Fatura Tarihi</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Not</th>
+                                            <th>Vade</th>
+                                            <th>Oluşturan</th>
+                                            <th>Kadir Onayı</th>
+                                            <th>Durum</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-<div id="ibrahimInvoicesApprovedTab" class="tab-content">
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title">1. Onayı Verdiğim Faturalar</h2>
-        </div>
-        <div class="table-container">
-            <table id="ibrahimInvoicesApprovedTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Fatura No</th>
-                        <th>Fatura Tarihi</th>
-                        <th>Tutar</th>
-                        <th>Firma</th>
-                        <th>Not</th>
-                        <th>Vade</th>
-                        <th>Oluşturan</th>
-                        <th>Kadir Onayı</th>
-                        <th>Durum</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
-</div>
+
+                    <div id="ibrahimInvoicesApprovedTab" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">1. Onayı Verdiğim Faturalar</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="ibrahimInvoicesApprovedTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Fatura Tarihi</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Not</th>
+                                            <th>Vade</th>
+                                            <th>Oluşturan</th>
+                                            <th>Kadir Onayı</th>
+                                            <th>Durum</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Muhasebe Dashboard (Mahmut) -->
                 <div id="mahmutDashboard" class="hidden">
@@ -2303,6 +2304,60 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 
         function getFirstApproverRole(userRole) {
             return userRole === 'magaza' ? 'magaza_muduru' : 'ibrahim';
+        }
+
+        function normalizeStatus(status) {
+            return (status || '').trim();
+        }
+
+        function isIbrahimPendingInvoice(invoice) {
+            return normalizeStatus(invoice.status) === '1. Onay Bekliyor';
+        }
+
+        function isIbrahimPendingTransaction(transaction, approverRole) {
+            const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
+            return normalizeStatus(transaction.status) === '1. Onay Bekliyor'
+                && transactionApproverRole === approverRole;
+        }
+
+        async function repairKadirApprovedRecords() {
+            const invoicesRef = dbRef(db, 'invoices');
+            const transactionsRef = dbRef(db, 'transactions');
+            const [invoicesSnap, transactionsSnap] = await Promise.all([dbGet(invoicesRef), dbGet(transactionsRef)]);
+            const repairs = [];
+
+            if (invoicesSnap.exists()) {
+                invoicesSnap.forEach((child) => {
+                    const invoice = child.val();
+                    if (invoice.kadirApprovedBy && normalizeStatus(invoice.status) !== '1. Onay Bekliyor') {
+                        repairs.push(dbUpdate(dbRef(db, `invoices/${child.key}`), {
+                            status: '1. Onay Bekliyor',
+                            approvalStage: 1,
+                            firstApproverRole: 'ibrahim',
+                            requiresKadirApproval: false,
+                            readyForIbrahimApproval: true
+                        }));
+                    }
+                });
+            }
+
+            if (transactionsSnap.exists()) {
+                transactionsSnap.forEach((child) => {
+                    const transaction = child.val();
+                    if (transaction.kadirApprovedBy && normalizeStatus(transaction.status) !== '1. Onay Bekliyor') {
+                        repairs.push(dbUpdate(dbRef(db, `transactions/${child.key}`), {
+                            status: '1. Onay Bekliyor',
+                            approvalStage: 1,
+                            requiresKadirApproval: false,
+                            readyForIbrahimApproval: true
+                        }));
+                    }
+                });
+            }
+
+            if (repairs.length) {
+                await Promise.all(repairs);
+            }
         }
 
         function canReachIbrahimApproval(record) {
@@ -2900,7 +2955,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             break;
         case 'ibrahim':
             document.getElementById('ibrahimDashboard').classList.remove('hidden');
-            loadIbrahimData();
+            resetDashboardTabs('ibrahimDashboard', 'ibrahimPendingTab');
+            repairKadirApprovedRecords().finally(() => loadIbrahimData());
             break;
         case 'magaza_muduru':
             document.getElementById('ibrahimDashboard').classList.remove('hidden');
@@ -3822,7 +3878,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     
                     const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
 
-                    if (transaction.status === '1. Onay Bekliyor' && transactionApproverRole === approverRole && canReachIbrahimApproval(transaction)) {
+                    if (isIbrahimPendingTransaction(transaction, approverRole)) {
                         pendingTransactions.push(transaction);
                     } else if (transaction.firstApprovedBy === currentUser.email) {
                         approvedTransactions.push(transaction);
@@ -3899,7 +3955,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     const invoice = { id: child.key, ...child.val() };
                     allInvoices.push(invoice);
                     
-                    if (invoice.status === '1. Onay Bekliyor' && canReachIbrahimApproval(invoice)) {
+                    if (isIbrahimPendingInvoice(invoice)) {
                         pendingInvoices.push(invoice);
                     } else if (invoice.firstApprovedBy === currentUser.email) {
                         approvedInvoices.push(invoice);
@@ -3909,51 +3965,55 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 document.getElementById('ibrahimPendingInvoices').textContent = pendingInvoices.length;
                 document.getElementById('ibrahimApprovedInvoices').textContent = approvedInvoices.length;
                 
-         const pendingInvoicesTbody = document.querySelector('#ibrahimInvoicesPendingTable tbody');
-pendingInvoicesTbody.innerHTML = '';
-pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
-    pendingInvoicesTbody.innerHTML += `
-        <tr>
-            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
-            <td>${invoice.invoiceNumber}</td>
-            <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
-            <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
-            <td>${invoice.company}</td>
-            <td>${invoice.note || '-'}</td>
-            <td>${invoice.dueDate || '-'}</td> <!-- VADE SÜTUNU DÜZELTİLDİ -->
-            <td>${invoice.createdBy}</td> <!-- OLUŞTURAN SÜTUNU DÜZELTİLDİ -->
-            <td>${formatKadirApprovalCell(invoice)}</td>
-            <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn btn-success" onclick="approveInvoice1('${invoice.id}')">1. Onay Ver</button>
-                    <button class="action-btn btn-danger" onclick="rejectInvoice1('${invoice.id}')">1. Reddet</button>
-                </div>
-            </td>
-        </tr>
-    `;
-});
+                const pendingInvoicesTbody = document.querySelector('#ibrahimInvoicesPendingTable tbody');
+                if (pendingInvoicesTbody) {
+                    pendingInvoicesTbody.innerHTML = '';
+                    pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                        const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+                        pendingInvoicesTbody.innerHTML += `
+                            <tr>
+                                <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                                <td>${invoice.invoiceNumber}</td>
+                                <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
+                                <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
+                                <td>${invoice.company}</td>
+                                <td>${invoice.note || '-'}</td>
+                                <td>${invoice.dueDate || '-'}</td>
+                                <td>${invoice.createdBy}</td>
+                                <td>${formatKadirApprovalCell(invoice)}</td>
+                                <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn btn-success" onclick="approveInvoice1('${invoice.id}')">1. Onay Ver</button>
+                                        <button class="action-btn btn-danger" onclick="rejectInvoice1('${invoice.id}')">1. Reddet</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
 
-const approvedInvoicesTbody = document.querySelector('#ibrahimInvoicesApprovedTable tbody');
-approvedInvoicesTbody.innerHTML = '';
-approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
-    approvedInvoicesTbody.innerHTML += `
-        <tr>
-            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
-            <td>${invoice.invoiceNumber}</td>
-            <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
-            <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
-            <td>${invoice.company}</td>
-            <td>${invoice.note || '-'}</td>
-            <td>${invoice.dueDate || '-'}</td> <!-- VADE SÜTUNU DÜZELTİLDİ -->
-            <td>${invoice.createdBy}</td> <!-- OLUŞTURAN SÜTUNU DÜZELTİLDİ -->
-            <td>${formatKadirApprovalCell(invoice)}</td>
-            <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
-        </tr>
-    `;
-});
+                const approvedInvoicesTbody = document.querySelector('#ibrahimInvoicesApprovedTable tbody');
+                if (approvedInvoicesTbody) {
+                    approvedInvoicesTbody.innerHTML = '';
+                    approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
+                        const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+                        approvedInvoicesTbody.innerHTML += `
+                            <tr>
+                                <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
+                                <td>${invoice.invoiceNumber}</td>
+                                <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
+                                <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
+                                <td>${invoice.company}</td>
+                                <td>${invoice.note || '-'}</td>
+                                <td>${invoice.dueDate || '-'}</td>
+                                <td>${invoice.createdBy}</td>
+                                <td>${formatKadirApprovalCell(invoice)}</td>
+                                <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
+                            </tr>
+                        `;
+                    });
+                }
             });
         }
 
@@ -4534,7 +4594,10 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             const tabContent = document.getElementById(tabName);
             if (!tabContent) return;
 
-            const dashboardRoot = tabContent.closest('[id$="Dashboard"]');
+            let dashboardRoot = tabContent.closest('[id$="Dashboard"]');
+            if (!dashboardRoot) {
+                dashboardRoot = document.querySelector('[id$="Dashboard"]:not(.hidden)');
+            }
             if (!dashboardRoot) return;
 
             dashboardRoot.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
