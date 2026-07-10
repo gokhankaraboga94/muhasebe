@@ -1318,11 +1318,10 @@
                             <div id="transactionKadirInfoBox" class="info-box">
                                 <h4>📋 İşlem Onay Akışı</h4>
                                 <p>Oluşturduğunuz işlemler şu adımlardan geçecektir:</p>
-                                <p><strong>0. Adım:</strong> Kadir (Ön Onay)<br>
-                                <strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                                <p><strong>1. Adım:</strong> İbrahim (1. Onay)<br>
                                 <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
                                 <strong>3. Adım:</strong> Maliyet Onayı</p>
-                                <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> Kadir ve İbrahim onaylamadan önce işlemlerinizi düzenleyebilirsiniz.</p>
+                                <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> İbrahim onaylamadan önce işlemlerinizi düzenleyebilirsiniz.</p>
                             </div>
                             <form onsubmit="createTransaction(event)">
                                 <div class="row">
@@ -1411,11 +1410,7 @@
                             </div>
                             <div class="info-box">
                                 <h4>✏️ Düzenleme Yetkisi</h4>
-                                <p>Kadir ve 1. Onay tarafından henüz onaylanmamış işlemlerinizi düzenleyebilirsiniz. 1. onay verdikten sonra düzenleme yapılamaz.</p>
-                            </div>
-                            <div id="creatorKadirPendingTransactionInfo" class="info-box">
-                                <h4>ℹ️ Kadir Onayı</h4>
-                                <p>Kadir onayına gönderilen işlemler burada listelenmez. Kadir onayladıktan sonra "1. Onay Bekliyor" durumunda burada görünür.</p>
+                                <p>1. Onay tarafından henüz onaylanmamış işlemlerinizi düzenleyebilirsiniz. 1. onay verdikten sonra düzenleme yapılamaz.</p>
                             </div>
                             <div class="table-container">
                                 <table id="mehmetTransactionsTable">
@@ -1553,7 +1548,7 @@
                 <!-- Kadir Dashboard -->
                 <div id="kadirDashboard" class="hidden">
                     <div class="alert alert-info" style="margin-bottom: 20px;">
-                        <strong>Ön Onay Paneli:</strong> Mehmet gibi kullanıcıların oluşturduğu işlem/faturalar burada onaylanır. Kendi oluşturduklarınız burada görünmez; onlar doğrudan İbrahim onayına gider.
+                        <strong>Ön Onay Paneli:</strong> Mehmet gibi kullanıcıların oluşturduğu faturalar burada onaylanır. İşlemler Kadir onayına düşmez; doğrudan İbrahim onayına gider. Kendi oluşturduklarınız burada görünmez; onlar doğrudan İbrahim onayına gider.
                     </div>
                     <div class="grid">
                         <div class="stat-card">
@@ -2298,8 +2293,12 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             return status === 'Kadir Onayı Bekliyor' || status === '1. Onay Bekliyor';
         }
 
-        function usesKadirPreApproval(userRole) {
+        function usesKadirPreApprovalForInvoice(userRole) {
             return userRole !== 'magaza' && userRole !== 'kadir';
+        }
+
+        function usesKadirPreApprovalForTransaction(userRole) {
+            return false;
         }
 
         function getFirstApproverRole(userRole) {
@@ -2345,6 +2344,31 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 transactionsSnap.forEach((child) => {
                     const transaction = child.val();
                     if (transaction.kadirApprovedBy && normalizeStatus(transaction.status) !== '1. Onay Bekliyor') {
+                        repairs.push(dbUpdate(dbRef(db, `transactions/${child.key}`), {
+                            status: '1. Onay Bekliyor',
+                            approvalStage: 1,
+                            requiresKadirApproval: false,
+                            readyForIbrahimApproval: true
+                        }));
+                    }
+                });
+            }
+
+            if (repairs.length) {
+                await Promise.all(repairs);
+            }
+        }
+
+        async function repairStuckTransactionKadirQueue() {
+            const transactionsRef = dbRef(db, 'transactions');
+            const snapshot = await dbGet(transactionsRef);
+            const repairs = [];
+
+            if (snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    const transaction = child.val();
+                    const approverRole = transaction.firstApproverRole || 'ibrahim';
+                    if (normalizeStatus(transaction.status) === 'Kadir Onayı Bekliyor' && approverRole === 'ibrahim') {
                         repairs.push(dbUpdate(dbRef(db, `transactions/${child.key}`), {
                             status: '1. Onay Bekliyor',
                             approvalStage: 1,
@@ -2822,11 +2846,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         }
 
         function updateCreatorPanelForRole(role) {
-            const hideOthersPendingInfo = role === 'kadir';
+            const hideInvoiceKadirInfo = role === 'kadir';
             const invoiceInfo = document.getElementById('creatorKadirPendingInvoiceInfo');
-            const transactionInfo = document.getElementById('creatorKadirPendingTransactionInfo');
-            if (invoiceInfo) invoiceInfo.classList.toggle('hidden', hideOthersPendingInfo);
-            if (transactionInfo) transactionInfo.classList.toggle('hidden', hideOthersPendingInfo);
+            if (invoiceInfo) invoiceInfo.classList.toggle('hidden', hideInvoiceKadirInfo);
 
             const transactionFlowInfo = document.getElementById('transactionKadirInfoBox');
             if (transactionFlowInfo) {
@@ -2845,11 +2867,10 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                     transactionFlowInfo.innerHTML = `
                         <h4>📋 İşlem Onay Akışı</h4>
                         <p>Oluşturduğunuz işlemler şu adımlardan geçecektir:</p>
-                        <p><strong>0. Adım:</strong> Kadir (Ön Onay)<br>
-                        <strong>1. Adım:</strong> İbrahim (1. Onay)<br>
+                        <p><strong>1. Adım:</strong> İbrahim (1. Onay)<br>
                         <strong>2. Adım:</strong> Muhasebe - Mahmut (2. Onay)<br>
                         <strong>3. Adım:</strong> Maliyet Onayı</p>
-                        <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> Kadir ve İbrahim onaylamadan önce işlemlerinizi düzenleyebilirsiniz.</p>
+                        <p style="margin-top: 10px; color: #10b981;"><strong>✏️ Not:</strong> İbrahim onaylamadan önce işlemlerinizi düzenleyebilirsiniz.</p>
                     `;
                 }
             }
@@ -2919,7 +2940,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         case 'mehmet':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
             updateCreatorPanelForRole('mehmet');
-            loadMehmetData();
+            repairStuckTransactionKadirQueue().finally(() => loadMehmetData());
             loadStatusOptions();
             loadServiceTypes();
             break;
@@ -2992,7 +3013,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
             
             const sixDigitId = generateSixDigitId();
-            const needsKadirApproval = usesKadirPreApproval(currentUserRole);
+            const needsKadirApproval = usesKadirPreApprovalForInvoice(currentUserRole);
             
             const invoiceData = {
                 customId: sixDigitId,
@@ -3095,7 +3116,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 }
             }
             
-            const needsKadirApproval = usesKadirPreApproval(currentUserRole);
+            const needsKadirApproval = usesKadirPreApprovalForInvoice(currentUserRole);
 
             const invoiceData = {
                 customId: finalInvoiceId,
@@ -3166,7 +3187,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             const sixDigitId = generateSixDigitId();
 
             const firstApproverRole = getFirstApproverRole(currentUserRole);
-            const needsKadirApproval = usesKadirPreApproval(currentUserRole);
+            const needsKadirApproval = usesKadirPreApprovalForTransaction(currentUserRole);
             
             const transactionData = {
                 customId: sixDigitId,
