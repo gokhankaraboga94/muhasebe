@@ -2559,38 +2559,35 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         }
 
         function formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId, invoiceByFirebaseId, allInvoices) {
-            const hasLinkHint = !!transaction.linkedInvoiceId;
-            const invoice = resolveLinkedInvoiceForTransaction(
-                transaction,
-                invoiceByCustomId,
-                invoiceByFirebaseId,
-                allInvoices || []
-            );
-            if (invoice) {
-                const id = normalizeLinkId(invoice.customId) || invoice.id.substring(0, 6);
-                return `<span class="linked-indicator linked-ok" title="Fatura ID: ${id}">🔗 Fatura #${id}</span>`;
-            }
-            if (hasLinkHint) {
-                const linkId = normalizeLinkId(transaction.linkedInvoiceId);
-                return `<span class="linked-indicator linked-missing" title="Bağlantılı fatura (${linkId}) bulunamadı">⚠️ Fatura Eksik</span>`;
+            const maps = invoiceByCustomId || {};
+            const invByFb = invoiceByFirebaseId || {};
+            const invList = allInvoices || [];
+            const txCustomId = normalizeLinkId(transaction.customId);
+
+            const resolved = resolveLinkedInvoiceForTransaction(transaction, maps, invByFb, invList);
+            const hasLinkField = !!normalizeLinkId(transaction.linkedInvoiceId);
+            const hasSharedId = !!(txCustomId && maps[txCustomId]);
+
+            if (resolved || hasLinkField || hasSharedId) {
+                const title = txCustomId ? `Bağlantılı fatura (ID: ${txCustomId})` : 'Fatura Bağlantılı';
+                return `<span class="linked-indicator linked-ok" title="${title}">🔗 Fatura Bağlantılı</span>`;
             }
             return '';
         }
 
         function formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId, allTransactions) {
-            const hasLinkHint = !!(invoice.linkedTransactionId || invoice.linkedTransactionCustomId);
-            const transaction = resolveLinkedTransactionForInvoice(
-                invoice,
-                transactionByFirebaseId,
-                transactionByCustomId,
-                allTransactions || []
-            );
-            if (transaction) {
-                const id = normalizeLinkId(transaction.customId) || transaction.id.substring(0, 6);
-                return `<span class="linked-indicator linked-ok" title="İşlem ID: ${id}">🔗 İşlem #${id}</span>`;
-            }
-            if (hasLinkHint) {
-                return `<span class="linked-indicator linked-missing" title="Bağlantılı işlem bulunamadı">⚠️ İşlem Eksik</span>`;
+            const mapsById = transactionByFirebaseId || {};
+            const mapsByCustom = transactionByCustomId || {};
+            const txList = allTransactions || [];
+            const invCustomId = normalizeLinkId(invoice.customId);
+
+            const resolved = resolveLinkedTransactionForInvoice(invoice, mapsById, mapsByCustom, txList);
+            const hasLinkField = !!(invoice.linkedTransactionId || invoice.linkedTransactionCustomId);
+            const hasSharedId = !!(invCustomId && mapsByCustom[invCustomId]);
+
+            if (resolved || hasLinkField || hasSharedId) {
+                const title = invCustomId ? `Bağlantılı işlem (ID: ${invCustomId})` : 'İşlem Bağlantılı';
+                return `<span class="linked-indicator linked-ok" title="${title}">🔗 İşlem Bağlantılı</span>`;
             }
             return '';
         }
@@ -2867,31 +2864,58 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
         }
 
-        async function getUserRole(email) {
-            const normalizedEmail = (email || '').toLowerCase();
-            if (normalizedEmail === 'kadir@mobilfon.com' || normalizedEmail === 'kadir.celik@mobilfon.com') {
-                return 'kadir';
-            }
-            if (normalizedEmail === 'ibrahim@mobilfon.com' || normalizedEmail === 'ibrahim.duz@mobilfon.com') {
-                return 'ibrahim';
-            }
-            if (normalizedEmail === 'cigdem2026@mobilfon.com' || normalizedEmail === 'samil@mobilfon.com') {
-                return 'viewer';
-            }
+        async function getUserRole(email, uid) {
+            const normalizedEmail = (email || '').toLowerCase().trim();
+            const resolvedUid = uid || auth.currentUser?.uid;
 
-            const usersRef = dbRef(db, 'users');
-            const snapshot = await dbGet(usersRef);
-            
-            if (snapshot.exists()) {
-                const users = snapshot.val();
-                for (let uid in users) {
-                    if ((users[uid].email || '').toLowerCase() === normalizedEmail) {
-                        return users[uid].role;
+            if (resolvedUid) {
+                try {
+                    const ownUserSnap = await dbGet(dbRef(db, `users/${resolvedUid}`));
+                    if (ownUserSnap.exists()) {
+                        const ownUser = ownUserSnap.val();
+                        if (ownUser.role) return ownUser.role;
                     }
+                } catch (error) {
+                    console.warn('Kullanıcı rolü (uid) okunamadı:', error);
                 }
             }
-            
-            return defaultUserRoles[normalizedEmail] || defaultUserRoles[email] || null;
+
+            if (defaultUserRoles[normalizedEmail]) {
+                return defaultUserRoles[normalizedEmail];
+            }
+
+            try {
+                const usersRef = dbRef(db, 'users');
+                const snapshot = await dbGet(usersRef);
+
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    for (let userId in users) {
+                        const userEmail = (users[userId].email || '').toLowerCase().trim();
+                        if (userEmail === normalizedEmail && users[userId].role) {
+                            return users[userId].role;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Kullanıcı rolü (liste) okunamadı:', error);
+            }
+
+            if (defaultUserRoles[normalizedEmail] && resolvedUid) {
+                const fallbackRole = defaultUserRoles[normalizedEmail];
+                try {
+                    await dbUpdate(dbRef(db, `users/${resolvedUid}`), {
+                        email: normalizedEmail,
+                        role: fallbackRole,
+                        repairedAt: new Date().toISOString()
+                    });
+                } catch (error) {
+                    console.warn('Rol otomatik onarımı yazılamadı:', error);
+                }
+                return fallbackRole;
+            }
+
+            return null;
         }
 
         window.login = async function(event) {
@@ -2917,9 +2941,14 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         window.createUser = async function(event) {
             event.preventDefault();
             
-            const email = document.getElementById('newUserEmail').value;
+            const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
             const password = document.getElementById('newUserPassword').value;
             const role = document.getElementById('newUserRole').value;
+
+            if (!role) {
+                alert('Lütfen bir kullanıcı rolü seçin!');
+                return;
+            }
 
             if (password.length < 6) {
                 alert('Şifre en az 6 karakter olmalıdır!');
@@ -2927,6 +2956,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
 
             try {
+                const adminEmail = currentUser?.email || 'admin';
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
@@ -2935,10 +2965,10 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                     email: email,
                     role: role,
                     createdAt: new Date().toISOString(),
-                    createdBy: currentUser.email
+                    createdBy: adminEmail
                 });
 
-                await addLog(currentUser.email, 'Yeni Kullanıcı Oluşturdu', `E-posta: ${email}, Rol: ${role}`);
+                await addLog(adminEmail, 'Yeni Kullanıcı Oluşturdu', `E-posta: ${email}, Rol: ${role}`);
                 
                 alert('Kullanıcı başarıyla oluşturuldu!');
                 event.target.reset();
@@ -3085,7 +3115,20 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                currentUserRole = await getUserRole(user.email);
+                currentUserRole = await getUserRole(user.email, user.uid);
+
+                if (!currentUserRole) {
+                    document.body.classList.remove('app-dashboard');
+                    document.getElementById('app').classList.remove('dashboard-mode');
+                    document.getElementById('loginScreen').classList.remove('hidden');
+                    document.getElementById('dashboard').classList.add('hidden');
+                    document.getElementById('loginBtnText').textContent = 'Giriş Yap';
+                    const errorDiv = document.getElementById('loginError');
+                    errorDiv.textContent = `Hesabınıza tanımlı bir rol bulunamadı (${user.email}). Yönetici panelinden rol atanmış olsa bile Firebase kaydı okunamadı. Lütfen yönetici ile iletişime geçin.`;
+                    errorDiv.classList.remove('hidden');
+                    await signOut(auth);
+                    return;
+                }
                 
                 document.body.classList.add('app-dashboard');
                 document.getElementById('app').classList.add('dashboard-mode');
@@ -4082,7 +4125,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 pendingTbody.innerHTML = '';
                 pendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
-                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+                    const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, {}, {}, []);
                     pendingTbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4109,7 +4152,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
-                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+                    const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, {}, {}, []);
                     const approvalDate = transaction.kadirApprovedAt ? new Date(transaction.kadirApprovedAt).toLocaleString('tr-TR') : '-';
                     approvedTbody.innerHTML += `
                         <tr>
@@ -4151,7 +4194,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const pendingInvoicesTbody = document.querySelector('#kadirInvoicesPendingTable tbody');
                 pendingInvoicesTbody.innerHTML = '';
                 pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+                    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, {}, {}, []);
                     pendingInvoicesTbody.innerHTML += `
                         <tr>
                             <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4173,7 +4216,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 const approvedInvoicesTbody = document.querySelector('#kadirInvoicesApprovedTable tbody');
                 approvedInvoicesTbody.innerHTML = '';
                 approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-                    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+                    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, {}, {}, []);
                     const approvalDate = invoice.kadirApprovedAt ? new Date(invoice.kadirApprovedAt).toLocaleString('tr-TR') : '-';
                     approvedInvoicesTbody.innerHTML += `
                         <tr>
@@ -4256,7 +4299,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 pendingTbody.innerHTML = '';
                 pendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
-                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+                    const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, {}, {}, []);
                     pendingTbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4286,7 +4329,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 approvedTbody.innerHTML = '';
                 approvedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
-                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+                    const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, {}, {}, []);
                     const canDelete = currentUserRole !== 'magaza_muduru';
                     approvedTbody.innerHTML += `
                         <tr>
@@ -4333,7 +4376,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 if (pendingInvoicesTbody) {
                     pendingInvoicesTbody.innerHTML = '';
                     pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-                        const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+                        const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, {}, {}, []);
                         pendingInvoicesTbody.innerHTML += `
                             <tr>
                                 <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4370,7 +4413,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                         `;
                     }
                     approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-                        const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+                        const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, {}, {}, []);
                         approvedInvoicesTbody.innerHTML += `
                             <tr>
                                 <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4418,7 +4461,7 @@ function loadMahmutData() {
         const pendingTbody = document.querySelector('#mahmutInvoicesPendingTable tbody');
         pendingTbody.innerHTML = '';
         pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-            const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+            const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, {}, {}, []);
             pendingTbody.innerHTML += `
                 <tr>
                     <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4446,7 +4489,7 @@ function loadMahmutData() {
         
         // DÜZELTİLMİŞ KISIM: safeApprovedInvoices kullanılıyor
         safeApprovedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-            const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+            const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, {}, {}, []);
             approvedTbody.innerHTML += `
                 <tr>
                     <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4504,7 +4547,7 @@ function loadMahmutData() {
         pendingTbody.innerHTML = '';
         safePendingTransactions2.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
             const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
-            const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, {}, {}, []);
             pendingTbody.innerHTML += `
                 <tr>
                     <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4533,7 +4576,7 @@ function loadMahmutData() {
         const costPendingTbody = document.querySelector('#mahmutCostPendingTable tbody');
         costPendingTbody.innerHTML = '';
         safeCostPendingTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
-            const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, {}, {}, []);
             costPendingTbody.innerHTML += `
                 <tr>
                     <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4559,7 +4602,7 @@ function loadMahmutData() {
         approvedTbody.innerHTML = '';
         safeApprovedTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
             const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
-            const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, {}, {}, []);
             approvedTbody.innerHTML += `
                 <tr>
                     <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4584,7 +4627,7 @@ function loadMahmutData() {
         const costPaidTbody = document.querySelector('#mahmutCostPaidTable tbody');
         costPaidTbody.innerHTML = '';
         safeCostPaidTransactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
-            const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, {}, {}, []);
             costPaidTbody.innerHTML += `
                 <tr>
                     <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
