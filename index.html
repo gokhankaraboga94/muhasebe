@@ -2498,10 +2498,16 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             return '<span style="color:#9ca3af;">-</span>';
         }
 
+        function normalizeLinkId(value) {
+            if (value === null || value === undefined) return '';
+            return String(value).trim();
+        }
+
         function buildRecordsByCustomId(records) {
             const map = {};
             records.forEach((record) => {
-                if (record.customId) map[record.customId] = record;
+                const id = normalizeLinkId(record.customId);
+                if (id) map[id] = record;
             });
             return map;
         }
@@ -2514,25 +2520,76 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             return map;
         }
 
-        function formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId) {
-            const linkId = transaction.linkedInvoiceId;
-            if (!linkId) return '';
-            const invoice = invoiceByCustomId[linkId];
-            if (invoice) {
-                return `<span class="linked-indicator linked-ok" title="Fatura ID: ${linkId}">🔗 Fatura #${linkId}</span>`;
+        function resolveLinkedInvoiceForTransaction(transaction, invoiceByCustomId, invoiceByFirebaseId, allInvoices) {
+            const linkId = normalizeLinkId(transaction.linkedInvoiceId);
+            if (linkId && invoiceByCustomId[linkId]) return invoiceByCustomId[linkId];
+            if (linkId && invoiceByFirebaseId[linkId]) return invoiceByFirebaseId[linkId];
+
+            const txId = transaction.id;
+            const txCustomId = normalizeLinkId(transaction.customId);
+            for (const invoice of allInvoices) {
+                if (invoice.linkedTransactionId === txId) return invoice;
+                if (txCustomId && normalizeLinkId(invoice.customId) === txCustomId) return invoice;
+                if (linkId && normalizeLinkId(invoice.customId) === linkId) return invoice;
             }
-            return `<span class="linked-indicator linked-missing" title="Bağlantılı fatura (${linkId}) bulunamadı">⚠️ Fatura Eksik</span>`;
+            return null;
         }
 
-        function formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId) {
-            if (invoice.linkedTransactionId && transactionByFirebaseId[invoice.linkedTransactionId]) {
-                return `<span class="linked-indicator linked-ok" title="İşlem bağlantılı">🔗 İşlem Bağlantılı</span>`;
+        function resolveLinkedTransactionForInvoice(invoice, transactionByFirebaseId, transactionByCustomId, allTransactions) {
+            const linkFirebaseId = normalizeLinkId(invoice.linkedTransactionId);
+            if (linkFirebaseId && transactionByFirebaseId[linkFirebaseId]) {
+                return transactionByFirebaseId[linkFirebaseId];
             }
-            const linkId = invoice.linkedTransactionCustomId || invoice.customId;
-            if (linkId && transactionByCustomId[linkId]) {
-                return `<span class="linked-indicator linked-ok" title="İşlem ID: ${linkId}">🔗 İşlem #${linkId}</span>`;
+            if (linkFirebaseId && transactionByCustomId[linkFirebaseId]) {
+                return transactionByCustomId[linkFirebaseId];
             }
-            if (invoice.linkedTransactionId) {
+
+            const invCustomId = normalizeLinkId(invoice.customId);
+            const linkCustomId = normalizeLinkId(invoice.linkedTransactionCustomId) || invCustomId;
+            if (linkCustomId && transactionByCustomId[linkCustomId]) {
+                return transactionByCustomId[linkCustomId];
+            }
+
+            for (const transaction of allTransactions) {
+                if (transaction.id === invoice.linkedTransactionId) return transaction;
+                if (invCustomId && normalizeLinkId(transaction.linkedInvoiceId) === invCustomId) return transaction;
+                if (invCustomId && normalizeLinkId(transaction.customId) === invCustomId && transaction.linkedInvoiceId) return transaction;
+            }
+            return null;
+        }
+
+        function formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId, invoiceByFirebaseId, allInvoices) {
+            const hasLinkHint = !!transaction.linkedInvoiceId;
+            const invoice = resolveLinkedInvoiceForTransaction(
+                transaction,
+                invoiceByCustomId,
+                invoiceByFirebaseId,
+                allInvoices || []
+            );
+            if (invoice) {
+                const id = normalizeLinkId(invoice.customId) || invoice.id.substring(0, 6);
+                return `<span class="linked-indicator linked-ok" title="Fatura ID: ${id}">🔗 Fatura #${id}</span>`;
+            }
+            if (hasLinkHint) {
+                const linkId = normalizeLinkId(transaction.linkedInvoiceId);
+                return `<span class="linked-indicator linked-missing" title="Bağlantılı fatura (${linkId}) bulunamadı">⚠️ Fatura Eksik</span>`;
+            }
+            return '';
+        }
+
+        function formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId, allTransactions) {
+            const hasLinkHint = !!(invoice.linkedTransactionId || invoice.linkedTransactionCustomId);
+            const transaction = resolveLinkedTransactionForInvoice(
+                invoice,
+                transactionByFirebaseId,
+                transactionByCustomId,
+                allTransactions || []
+            );
+            if (transaction) {
+                const id = normalizeLinkId(transaction.customId) || transaction.id.substring(0, 6);
+                return `<span class="linked-indicator linked-ok" title="İşlem ID: ${id}">🔗 İşlem #${id}</span>`;
+            }
+            if (hasLinkHint) {
                 return `<span class="linked-indicator linked-missing" title="Bağlantılı işlem bulunamadı">⚠️ İşlem Eksik</span>`;
             }
             return '';
@@ -2550,7 +2607,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             if (invoicesSnap.exists()) {
                 invoicesSnap.forEach((child) => {
                     const invoice = child.val();
-                    if (invoice.customId) invoicesByCustomId[invoice.customId] = { id: child.key, ...invoice };
+                    const customId = normalizeLinkId(invoice.customId);
+                    if (customId) invoicesByCustomId[customId] = { id: child.key, ...invoice };
                 });
             }
 
@@ -2558,10 +2616,11 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 transactionsSnap.forEach((child) => {
                     const transaction = { id: child.key, ...child.val() };
                     transactionsById[child.key] = transaction;
-                    if (transaction.customId) transactionsByCustomId[transaction.customId] = transaction;
+                    if (transaction.customId) transactionsByCustomId[normalizeLinkId(transaction.customId)] = transaction;
 
-                    if (transaction.linkedInvoiceId) {
-                        const linkedInvoice = invoicesByCustomId[transaction.linkedInvoiceId];
+                    const linkInvoiceId = normalizeLinkId(transaction.linkedInvoiceId);
+                    if (linkInvoiceId) {
+                        const linkedInvoice = invoicesByCustomId[linkInvoiceId];
                         if (linkedInvoice) {
                             const invoiceUpdates = {};
                             if (!linkedInvoice.linkedTransactionId) invoiceUpdates.linkedTransactionId = child.key;
@@ -2581,8 +2640,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                         const linkedTransaction = transactionsById[invoice.linkedTransactionId];
                         if (linkedTransaction) {
                             const transactionUpdates = {};
-                            const linkCustomId = invoice.customId || invoice.linkedTransactionCustomId;
-                            if (linkCustomId && linkedTransaction.linkedInvoiceId !== linkCustomId) {
+                            const linkCustomId = normalizeLinkId(invoice.customId || invoice.linkedTransactionCustomId);
+                            if (linkCustomId && normalizeLinkId(linkedTransaction.linkedInvoiceId) !== linkCustomId) {
                                 transactionUpdates.linkedInvoiceId = linkCustomId;
                             }
                             if (!linkedTransaction.linkedInvoiceAt) {
@@ -2592,15 +2651,15 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                                 repairs.push(dbUpdate(dbRef(db, `transactions/${invoice.linkedTransactionId}`), transactionUpdates));
                             }
                         }
-                    } else if (invoice.customId && transactionsByCustomId[invoice.customId]) {
-                        const transaction = transactionsByCustomId[invoice.customId];
+                    } else if (invoice.customId && transactionsByCustomId[normalizeLinkId(invoice.customId)]) {
+                        const transaction = transactionsByCustomId[normalizeLinkId(invoice.customId)];
                         repairs.push(dbUpdate(dbRef(db, `invoices/${child.key}`), {
                             linkedTransactionId: transaction.id,
-                            linkedTransactionCustomId: invoice.customId
+                            linkedTransactionCustomId: normalizeLinkId(invoice.customId)
                         }));
                         if (!transaction.linkedInvoiceId) {
                             repairs.push(dbUpdate(dbRef(db, `transactions/${transaction.id}`), {
-                                linkedInvoiceId: invoice.customId,
+                                linkedInvoiceId: normalizeLinkId(invoice.customId),
                                 linkedInvoiceAt: new Date().toISOString()
                             }));
                         }
@@ -3162,7 +3221,11 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         case 'mehmet':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
             updateCreatorPanelForRole('mehmet');
-            repairStuckTransactionKadirQueue().finally(() => loadMehmetData());
+            syncInvoiceTransactionLinks()
+                .catch((error) => console.error('Bağlantı senkronizasyon hatası:', error))
+                .finally(() => {
+                    repairStuckTransactionKadirQueue().finally(() => loadMehmetData());
+                });
             loadStatusOptions();
             loadServiceTypes();
             break;
@@ -3681,7 +3744,15 @@ await sendEmailNotification(
             const transactionsRef = dbRef(db, 'transactions');
             const logsRef = dbRef(db, 'logs');
 
-            dbOnValue(invoicesRef, (snapshot) => {
+            dbOnValue(invoicesRef, async (snapshot) => {
+                const transactionsSnap = await dbGet(transactionsRef);
+                const allTransactions = [];
+                if (transactionsSnap.exists()) {
+                    transactionsSnap.forEach((child) => allTransactions.push({ id: child.key, ...child.val() }));
+                }
+                const transactionByFirebaseId = buildRecordsByFirebaseId(allTransactions);
+                const transactionByCustomId = buildRecordsByCustomId(allTransactions);
+
                 const invoices = [];
                 snapshot.forEach((child) => {
                     invoices.push({ id: child.key, ...child.val() });
@@ -3691,7 +3762,7 @@ await sendEmailNotification(
            const tbody = document.querySelector('#adminInvoicesTable tbody');
 tbody.innerHTML = '';
 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-    const linkedBadge = invoice.linkedTransactionId ? '<span class="linked-indicator">🔗 İşlem Bağlantılı</span>' : '';
+    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId, allTransactions);
     tbody.innerHTML += `
         <tr>
             <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -3710,7 +3781,15 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
 });
             });
 
-            dbOnValue(transactionsRef, (snapshot) => {
+            dbOnValue(transactionsRef, async (snapshot) => {
+                const invoicesSnap = await dbGet(invoicesRef);
+                const allInvoices = [];
+                if (invoicesSnap.exists()) {
+                    invoicesSnap.forEach((child) => allInvoices.push({ id: child.key, ...child.val() }));
+                }
+                const invoiceByCustomId = buildRecordsByCustomId(allInvoices);
+                const invoiceByFirebaseId = buildRecordsByFirebaseId(allInvoices);
+
                 const transactions = [];
                 snapshot.forEach((child) => {
                     transactions.push({ id: child.key, ...child.val() });
@@ -3733,7 +3812,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 tbody.innerHTML = '';
                 transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
                     const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
-                    const linkedBadge = transaction.linkedInvoiceId ? '<span class="linked-indicator">🔗 Fatura Bağlantılı</span>' : '';
+                    const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId, invoiceByFirebaseId, allInvoices);
                     tbody.innerHTML += `
                         <tr>
                             <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -3844,7 +3923,7 @@ const tbody = document.querySelector('#selcukInvoicesTable tbody');
 tbody.innerHTML = '';
 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
     const canEdit = canEditBeforeFirstApproval(invoice.status);
-    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId);
+    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId, allTransactions);
     tbody.innerHTML += `
         <tr>
             <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -3875,6 +3954,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     invoicesSnap.forEach((child) => allInvoices.push({ id: child.key, ...child.val() }));
                 }
                 const invoiceByCustomId = buildRecordsByCustomId(allInvoices);
+                const invoiceByFirebaseId = buildRecordsByFirebaseId(allInvoices);
 
                 const transactions = [];
                 snapshot.forEach((child) => {
@@ -3903,7 +3983,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     pageTransactions.forEach(transaction => {
                         const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
                         const canEdit = canEditBeforeFirstApproval(transaction.status);
-                        const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId);
+                        const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId, invoiceByFirebaseId, allInvoices);
                         tbody.innerHTML += `
                             <tr>
                                 <td><strong>${transaction.customId || transaction.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -3954,7 +4034,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
 tbody.innerHTML = '';
 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
     const canEdit = canEditBeforeFirstApproval(invoice.status);
-    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId);
+    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId, allTransactions);
     tbody.innerHTML += `
         <tr>
             <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
@@ -4550,7 +4630,7 @@ tbody.innerHTML = '';
 invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
     const lastEdited = invoice.lastEditedAt ? new Date(invoice.lastEditedAt).toLocaleString('tr-TR') : 
                       invoice.createdAt ? new Date(invoice.createdAt).toLocaleString('tr-TR') : '-';
-    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId);
+    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, transactionByFirebaseId, transactionByCustomId, allTransactions);
     
     tbody.innerHTML += `
         <tr>
@@ -4577,6 +4657,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             invoicesSnap.forEach((child) => allInvoices.push({ id: child.key, ...child.val() }));
         }
         const invoiceByCustomId = buildRecordsByCustomId(allInvoices);
+        const invoiceByFirebaseId = buildRecordsByFirebaseId(allInvoices);
 
         const transactions = [];
         snapshot.forEach((child) => {
@@ -4602,7 +4683,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             const paymentDate = transaction.paymentDate ? new Date(transaction.paymentDate).toLocaleDateString('tr-TR') : '-';
             const lastEdited = transaction.lastEditedAt ? new Date(transaction.lastEditedAt).toLocaleString('tr-TR') : 
                               transaction.createdAt ? new Date(transaction.createdAt).toLocaleString('tr-TR') : '-';
-            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId);
+            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId, invoiceByFirebaseId, allInvoices);
             
             tbody.innerHTML += `
                 <tr>
@@ -4629,7 +4710,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
         const costPending = transactions.filter(t => t.status === 'Maliyet Onayı Bekliyor');
         costPending.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
             const secondApprovalDate = transaction.secondApprovedAt ? new Date(transaction.secondApprovedAt).toLocaleString('tr-TR') : '-';
-            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId);
+            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId, invoiceByFirebaseId, allInvoices);
             
             costPendingTbody.innerHTML += `
                 <tr>
@@ -4652,7 +4733,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
         const costPaid = transactions.filter(t => t.status === 'Tamamlandı - Maliyet Ödendi');
         costPaid.sort((a, b) => b.timestamp - a.timestamp).forEach(transaction => {
             const thirdApprovalDate = transaction.thirdApprovedAt ? new Date(transaction.thirdApprovedAt).toLocaleString('tr-TR') : '-';
-            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId);
+            const linkedBadge = formatTransactionInvoiceLinkBadge(transaction, invoiceByCustomId, invoiceByFirebaseId, allInvoices);
             
             costPaidTbody.innerHTML += `
                 <tr>
