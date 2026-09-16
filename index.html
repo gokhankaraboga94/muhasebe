@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kurumsal Onay ve İşlem Yönetim Sistemi</title>
+    <title>Mobilfon — Kurumsal Onay ve İşlem Yönetim Sistemi</title>
     <style>
         * {
             margin: 0;
@@ -12,27 +12,29 @@
         }
 
         :root {
-            --primary: #0f766e;
-            --primary-dark: #0d5f59;
-            --primary-light: #14b8a6;
-            --secondary: #059669;
+            --primary: #c2185b;
+            --primary-dark: #880e4f;
+            --primary-light: #f06292;
+            --secondary: #7b1fa2;
+            --accent: #e91e8c;
             --danger: #dc2626;
             --warning: #d97706;
-            --info: #0284c7;
+            --info: #7c3aed;
             --success: #16a34a;
-            --dark: #0f172a;
-            --muted: #64748b;
-            --light: #f8fafc;
+            --dark: #1a0a2e;
+            --muted: #6b5b7a;
+            --light: #faf5fc;
             --surface: #ffffff;
-            --border: #e2e8f0;
-            --shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-            --shadow-lg: 0 10px 40px rgba(15, 23, 42, 0.12);
+            --border: #e9d5ef;
+            --shadow: 0 1px 3px rgba(74, 20, 140, 0.08);
+            --shadow-lg: 0 10px 40px rgba(74, 20, 140, 0.14);
             --radius: 12px;
+            --gradient-brand: linear-gradient(135deg, #311b92 0%, #7b1fa2 45%, #c2185b 100%);
         }
 
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #eef2f7;
+            background: linear-gradient(160deg, #f3e8ff 0%, #fce4ec 50%, #f8f0fc 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -46,7 +48,7 @@
             align-items: stretch;
             justify-content: stretch;
             padding: 0;
-            background: #f1f5f9;
+            background: #f8f4fb;
         }
 
         .container {
@@ -66,24 +68,37 @@
         }
 
         .login-container {
-            max-width: 450px;
-            padding: 50px;
+            max-width: 440px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .login-cover {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        .login-form-wrap {
+            padding: 32px 36px 40px;
         }
 
         .logo {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
         }
 
         .logo h1 {
-            color: var(--primary);
-            font-size: 32px;
-            margin-bottom: 10px;
+            color: var(--secondary);
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
         }
 
         .logo p {
-            color: #6b7280;
-            font-size: 14px;
+            color: var(--muted);
+            font-size: 13px;
         }
 
         .form-group {
@@ -110,7 +125,7 @@
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.12);
         }
 
         textarea {
@@ -121,7 +136,7 @@
         button {
             width: 100%;
             padding: 14px;
-            background: var(--primary);
+            background: var(--gradient-brand);
             color: white;
             border: none;
             border-radius: 8px;
@@ -132,9 +147,9 @@
         }
 
         button:hover {
-            background: var(--primary-dark);
+            filter: brightness(1.08);
             transform: translateY(-2px);
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-lg);
         }
 
         button:disabled {
@@ -144,13 +159,21 @@
         }
 
         .navbar {
-            background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
-            padding: 14px 24px;
+            background: var(--gradient-brand);
+            padding: 10px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: white;
-            box-shadow: 0 2px 12px rgba(15, 118, 110, 0.25);
+            box-shadow: 0 2px 16px rgba(74, 20, 140, 0.3);
+        }
+
+        .navbar-logo {
+            height: 36px;
+            width: auto;
+            border-radius: 6px;
+            object-fit: cover;
+            object-position: center;
         }
 
         .navbar-left {
@@ -160,8 +183,9 @@
         }
 
         .navbar-brand {
-            font-size: 20px;
-            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .search-box {
@@ -241,6 +265,7 @@
         .stat-card:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-lg);
+            border-color: rgba(194, 24, 91, 0.25);
         }
 
         .stat-number {
@@ -285,7 +310,7 @@
         .tab.active {
             color: var(--primary);
             border-bottom-color: var(--primary);
-            background: rgba(15, 118, 110, 0.06);
+            background: rgba(194, 24, 91, 0.06);
             border-radius: 8px 8px 0 0;
         }
 
@@ -330,7 +355,7 @@
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: var(--gradient-brand);
             color: white;
         }
 
@@ -633,35 +658,35 @@
         }
 
         .info-box {
-            background: #dbeafe;
+            background: #f3e8ff;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
-            border-left: 4px solid #3b82f6;
+            border-left: 4px solid var(--secondary);
         }
 
         .info-box h4 {
-            color: #1e40af;
+            color: #6a1b9a;
             margin-bottom: 10px;
         }
 
         .info-box p {
-            color: #1e40af;
+            color: #4a148c;
             font-size: 14px;
             line-height: 1.6;
         }
 
         .info-box-warning {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
+            background: #fce4ec;
+            border-left: 4px solid var(--primary);
         }
 
         .info-box-warning h4 {
-            color: #92400e;
+            color: var(--primary-dark);
         }
 
         .info-box-warning p {
-            color: #92400e;
+            color: #880e4f;
         }
 
         .info-box-success {
@@ -753,13 +778,18 @@
             align-items: center;
             gap: 4px;
             padding: 3px 8px;
-            background: #dcfce7;
+            background: #f3e8ff;
             border-radius: 6px;
             font-size: 10px;
-            color: #166534;
+            color: #6a1b9a;
             font-weight: 600;
             margin-left: 6px;
             white-space: nowrap;
+        }
+
+        .linked-indicator.linked-ok {
+            background: #fce4ec;
+            color: var(--primary-dark);
         }
 
         .linked-indicator.linked-missing {
@@ -852,9 +882,11 @@
     <div class="container" id="app">
         <!-- Login Screen -->
         <div class="login-container" id="loginScreen">
+            <img src="mobilfontr_cover.jpg" alt="Mobilfon" class="login-cover">
+            <div class="login-form-wrap">
             <div class="logo">
-                <h1>🏢 Kurumsal Sistem</h1>
-                <p>Onay ve İşlem Yönetim Platformu</p>
+                <h1>Kurumsal Onay Sistemi</h1>
+                <p>Yenisini Aratmayacak Kadar İyi</p>
             </div>
             <form onsubmit="login(event)">
                 <div class="form-group">
@@ -870,13 +902,16 @@
                 </button>
             </form>
             <div id="loginError" class="alert alert-error hidden" style="margin-top: 20px;"></div>
+            </div>
         </div>
 
         <!-- Dashboard -->
         <div id="dashboard" class="hidden">
             <nav class="navbar">
                 <div class="navbar-left">
-                    <div class="navbar-brand">🏢 Kurumsal Sistem</div>
+                    <div class="navbar-brand">
+                        <img src="mobilfontr_cover.jpg" alt="Mobilfon" class="navbar-logo">
+                    </div>
                     <div class="search-box">
                         <span class="search-icon">🔍</span>
                         <input type="text" id="searchInput" placeholder="Ara..." oninput="searchRecords()">
@@ -1095,6 +1130,37 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary">Kullanıcı Oluştur</button>
                             </form>
+                            <p style="margin-top: 16px; color: var(--muted); font-size: 13px;">
+                                Auth hesabı var ama girişte rol hatası alınıyorsa aşağıdan rol kaydını onarın.
+                            </p>
+                            <form onsubmit="repairUserRole(event)" style="margin-top: 12px; padding-top: 16px; border-top: 1px solid var(--border);">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label>Mevcut E-posta *</label>
+                                            <input type="email" id="repairUserEmail" required placeholder="cigdem@mobilfon.com">
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label>Rol *</label>
+                                            <select id="repairUserRoleSelect" required>
+                                                <option value="">Seçiniz</option>
+                                                <option value="viewer">Sadece Görüntüleyici</option>
+                                                <option value="mehmet">Mehmet (İşlem + Fatura)</option>
+                                                <option value="selcuk">Selçuk (Fatura)</option>
+                                                <option value="kadir">Kadir (Ön Onay)</option>
+                                                <option value="ibrahim">İbrahim (1. Onay)</option>
+                                                <option value="mahmut">Mahmut (2./3. Onay)</option>
+                                                <option value="magaza">Mağaza</option>
+                                                <option value="magaza_muduru">Mağaza Müdürü</option>
+                                                <option value="admin">Admin</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-warning">Rol Kaydını Onar / Ata</button>
+                            </form>
                         </div>
 
                         <div class="card">
@@ -1162,17 +1228,12 @@
         <button class="tab" onclick="switchTab('viewerTransactions')">Tüm İşlemler</button>
         <button class="tab" onclick="switchTab('viewerCostPending')">Maliyet Bekleyenler</button>
         <button class="tab" onclick="switchTab('viewerCostPaid')">Maliyet Ödenenler</button>
-        <button class="tab" onclick="switchTab('viewerLogs')">Sistem Logları</button>
     </div>
 
     <div id="viewerInvoices" class="tab-content active">
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">Tüm Faturalar - Salt Okunur</h2>
-            </div>
-            <div class="info-box info-box-warning">
-                <h4>👁️ Salt Okunur — Tam Sistem Görünümü</h4>
-                <p>Tüm faturalar, işlemler, maliyet kayıtları ve sistem loglarını görüntüleyebilirsiniz. Onay veya düzenleme yetkisi yoktur.</p>
             </div>
             <div class="table-container">
                 <table id="viewerInvoicesTable">
@@ -1282,26 +1343,6 @@
         </div>
     </div>
 
-    <div id="viewerLogs" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Sistem Logları - Salt Okunur</h2>
-            </div>
-            <div class="table-container">
-                <table id="viewerLogsTable">
-                    <thead>
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Kullanıcı</th>
-                            <th>İşlem</th>
-                            <th>Detay</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
            <div id="selcukDashboard" class="hidden">
                     <div class="tabs">
@@ -2351,7 +2392,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 }
 
         const app = initializeApp(firebaseConfig);
+        const secondaryApp = initializeApp(firebaseConfig, 'UserCreation');
         const auth = getAuth(app);
+        const secondaryAuth = getAuth(secondaryApp);
         const db = getDatabase(app);
 
         window.auth = auth;
@@ -2377,8 +2420,33 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             'ibrahim.duz@mobilfon.com': 'ibrahim',
             'kadir@mobilfon.com': 'kadir',
             'samil@mobilfon.com': 'viewer',
+            'cigdem@mobilfon.com': 'viewer',
             'cigdem2026@mobilfon.com': 'viewer'
         };
+
+        function encodeEmailForUserKey(email) {
+            return (email || '').toLowerCase().trim().replace(/[@.]/g, '_');
+        }
+
+        function buildUserRecord(email, role, uid, createdBy) {
+            return {
+                email: (email || '').toLowerCase().trim(),
+                role: role,
+                uid: uid || null,
+                createdAt: new Date().toISOString(),
+                createdBy: createdBy || 'system'
+            };
+        }
+
+        async function writeUserRoleRecords(email, role, uid, createdBy) {
+            const record = buildUserRecord(email, role, uid, createdBy);
+            const writes = [dbSet(dbRef(db, `users/${uid}`), record)];
+            const emailKey = encodeEmailForUserKey(email);
+            if (emailKey && emailKey !== uid) {
+                writes.push(dbSet(dbRef(db, `users/${emailKey}`), record));
+            }
+            await Promise.all(writes);
+        }
 
         function generateSixDigitId() {
             return Math.floor(100000 + Math.random() * 900000).toString();
@@ -2867,6 +2935,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         async function getUserRole(email, uid) {
             const normalizedEmail = (email || '').toLowerCase().trim();
             const resolvedUid = uid || auth.currentUser?.uid;
+            const emailKey = encodeEmailForUserKey(normalizedEmail);
 
             if (resolvedUid) {
                 try {
@@ -2877,6 +2946,18 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                     }
                 } catch (error) {
                     console.warn('Kullanıcı rolü (uid) okunamadı:', error);
+                }
+            }
+
+            if (emailKey) {
+                try {
+                    const emailKeySnap = await dbGet(dbRef(db, `users/${emailKey}`));
+                    if (emailKeySnap.exists()) {
+                        const emailKeyUser = emailKeySnap.val();
+                        if (emailKeyUser.role) return emailKeyUser.role;
+                    }
+                } catch (error) {
+                    console.warn('Kullanıcı rolü (email key) okunamadı:', error);
                 }
             }
 
@@ -2901,14 +2982,10 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 console.warn('Kullanıcı rolü (liste) okunamadı:', error);
             }
 
-            if (defaultUserRoles[normalizedEmail] && resolvedUid) {
-                const fallbackRole = defaultUserRoles[normalizedEmail];
+            const fallbackRole = defaultUserRoles[normalizedEmail];
+            if (fallbackRole && resolvedUid) {
                 try {
-                    await dbUpdate(dbRef(db, `users/${resolvedUid}`), {
-                        email: normalizedEmail,
-                        role: fallbackRole,
-                        repairedAt: new Date().toISOString()
-                    });
+                    await writeUserRoleRecords(normalizedEmail, fallbackRole, resolvedUid, 'system-repair');
                 } catch (error) {
                     console.warn('Rol otomatik onarımı yazılamadı:', error);
                 }
@@ -2957,36 +3034,64 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 
             try {
                 const adminEmail = currentUser?.email || 'admin';
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
                 const user = userCredential.user;
 
-                const usersRef = dbRef(db, `users/${user.uid}`);
-                await dbSet(usersRef, {
-                    email: email,
-                    role: role,
-                    createdAt: new Date().toISOString(),
-                    createdBy: adminEmail
-                });
+                await writeUserRoleRecords(email, role, user.uid, adminEmail);
+                await signOut(secondaryAuth);
 
                 await addLog(adminEmail, 'Yeni Kullanıcı Oluşturdu', `E-posta: ${email}, Rol: ${role}`);
                 
                 alert('Kullanıcı başarıyla oluşturuldu!');
                 event.target.reset();
-                
-                await signOut(auth);
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                loadUsers();
                 
             } catch (error) {
                 console.error('Kullanıcı oluşturma hatası:', error);
+                try { await signOut(secondaryAuth); } catch (e) { /* ignore */ }
                 if (error.code === 'auth/email-already-in-use') {
-                    alert('Bu e-posta adresi zaten kullanımda!');
+                    alert('Bu e-posta adresi zaten kullanımda! Mevcut kullanıcı için admin panelinden rol kaydını yeniden oluşturmayı deneyin.');
                 } else if (error.code === 'auth/weak-password') {
                     alert('Şifre çok zayıf!');
                 } else {
                     alert('Kullanıcı oluşturulurken bir hata oluştu: ' + error.message);
                 }
+            }
+        };
+
+        window.repairUserRole = async function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('repairUserEmail').value.trim().toLowerCase();
+            const role = document.getElementById('repairUserRoleSelect').value;
+
+            if (!role) {
+                alert('Lütfen bir rol seçin!');
+                return;
+            }
+
+            try {
+                let matchedUid = null;
+                const usersSnap = await dbGet(dbRef(db, 'users'));
+                if (usersSnap.exists()) {
+                    usersSnap.forEach((child) => {
+                        const user = child.val();
+                        const userEmail = (user.email || '').toLowerCase().trim();
+                        if (userEmail === email) {
+                            matchedUid = user.uid || child.key;
+                        }
+                    });
+                }
+
+                const emailKey = encodeEmailForUserKey(email);
+                await writeUserRoleRecords(email, role, matchedUid || emailKey, currentUser?.email || 'admin');
+                await addLog(currentUser.email, 'Kullanıcı Rolü Onardı', `E-posta: ${email}, Rol: ${role}`);
+                alert('Rol kaydı başarıyla oluşturuldu / güncellendi. Kullanıcı artık giriş yapabilir.');
+                event.target.reset();
+                loadUsers();
+            } catch (error) {
+                console.error('Rol onarım hatası:', error);
+                alert('Rol kaydı yazılamadı: ' + error.message);
             }
         };
 
@@ -4650,7 +4755,6 @@ function loadMahmutData() {
         function loadViewerData() {
     const invoicesRef = dbRef(db, 'invoices');
     const transactionsRef = dbRef(db, 'transactions');
-    const logsRef = dbRef(db, 'logs');
 
     dbOnValue(invoicesRef, async (snapshot) => {
         const transactionsSnap = await dbGet(transactionsRef);
@@ -4790,26 +4894,6 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     <td><div class="cost-info">${transaction.note || '-'}</div></td>
                     <td><span class="badge badge-cost-paid">${transaction.status}</span></td>
                     <td>${thirdApprovalDate}</td>
-                </tr>
-            `;
-        });
-    });
-
-    dbOnValue(logsRef, (snapshot) => {
-        const logs = [];
-        snapshot.forEach((child) => logs.push(child.val()));
-
-        const tbody = document.querySelector('#viewerLogsTable tbody');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-        logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 200).forEach(log => {
-            const date = new Date(log.timestamp);
-            tbody.innerHTML += `
-                <tr>
-                    <td>${date.toLocaleString('tr-TR')}</td>
-                    <td>${log.userId}</td>
-                    <td>${log.action}</td>
-                    <td>${log.details}</td>
                 </tr>
             `;
         });
