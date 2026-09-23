@@ -1005,6 +1005,7 @@
                         <button class="tab" onclick="switchTab('adminCostPaid')">Maliyet Ödenenler</button>
                         <button class="tab" onclick="switchTab('adminLogs')">Sistem Logları</button>
                         <button class="tab" onclick="switchTab('adminUsers')">Kullanıcı Yönetimi</button>
+                        <button class="tab" onclick="switchTab('adminIt')">IT Ekranı</button>
                         <button class="tab" onclick="switchTab('adminSettings')">Ayarlar</button>
                     </div>
 
@@ -1230,6 +1231,30 @@
                                     <tbody></tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+
+                    <div id="adminIt" class="tab-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">IT — Kadir Onayı Atlama</h2>
+                            </div>
+                            <div class="info-box info-box-warning">
+                                <h4>Manuel müdahale</h4>
+                                <p>Belirli bir fatura ID'si için Kadir onayını atlayıp kaydı doğrudan <strong>1. Onay Bekliyor</strong> durumuna alır. Tüm bağlantılı faturalara otomatik uygulanmaz.</p>
+                            </div>
+                            <form onsubmit="adminSkipKadirForInvoice(event)">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label>Fatura ID *</label>
+                                            <input type="text" id="itSkipKadirInvoiceId" required placeholder="örn: 417452" maxlength="20">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-warning">Kadir Onayını Atla → İbrahim Onayına Gönder</button>
+                            </form>
+                            <div id="itSkipKadirResult" style="margin-top: 16px;"></div>
                         </div>
                     </div>
 
@@ -2536,6 +2561,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 
         function isKadirPendingInvoice(invoice) {
             if (invoice.kadirApprovedBy) return false;
+            if (invoice.kadirSkippedByAdmin) return false;
             if (isRecordFromKadirCreator(invoice)) return false;
 
             const status = normalizeStatus(invoice.status);
@@ -2577,6 +2603,37 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 
         async function removeFromKadirQueue(invoiceId) {
             await dbRemove(dbRef(db, `kadirQueue/invoices/${invoiceId}`));
+        }
+
+        async function findInvoiceByCustomId(customId) {
+            const targetId = normalizeLinkId(customId);
+            if (!targetId) return null;
+
+            const snapshot = await dbGet(dbRef(db, 'invoices'));
+            if (!snapshot.exists()) return null;
+
+            let found = null;
+            snapshot.forEach((child) => {
+                const invoice = child.val();
+                if (normalizeLinkId(invoice.customId) === targetId) {
+                    found = { id: child.key, ...invoice };
+                }
+            });
+            return found;
+        }
+
+        async function skipKadirApprovalForInvoice(invoiceId, invoice, skippedBy, reason) {
+            await dbUpdate(dbRef(db, `invoices/${invoiceId}`), {
+                status: '1. Onay Bekliyor',
+                approvalStage: 1,
+                requiresKadirApproval: false,
+                firstApproverRole: 'ibrahim',
+                readyForIbrahimApproval: true,
+                kadirSkippedByAdmin: skippedBy,
+                kadirSkippedAt: new Date().toISOString(),
+                adminSkipKadirReason: reason || 'Admin IT paneli'
+            });
+            await removeFromKadirQueue(invoiceId);
         }
 
         async function repairKadirQueueFromInvoices() {
@@ -2709,7 +2766,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             if (snapshot.exists()) {
                 snapshot.forEach((child) => {
                     const invoice = child.val();
-                    if (invoice.kadirApprovedBy || isRecordFromKadirCreator(invoice)) return;
+                    if (invoice.kadirApprovedBy || invoice.kadirSkippedByAdmin || isRecordFromKadirCreator(invoice)) return;
 
                     const status = normalizeStatus(invoice.status);
                     const shouldBeInKadirQueue = invoice.requiresKadirApproval === true
@@ -3302,15 +3359,24 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 const tbody = document.querySelector('#usersTable tbody');
                 tbody.innerHTML = '';
                 users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(user => {
+                    const isSystemUser = user.email === 'admin@servis.com' || user.createdBy === 'system';
                     tbody.innerHTML += `
                         <tr>
-                            <td>${user.email}</td>
-                            <td><span class="badge badge-user">${getRoleDisplayName(user.role)}</span></td>
-                            <td>${new Date(user.createdAt).toLocaleString('tr-TR')}</td>
+                            <td>${user.email || '-'}</td>
                             <td>
-                                ${user.email !== 'admin@servis.com' && user.createdBy !== 'system' ? 
-                                    `<button class="action-btn btn-danger" onclick="deleteUser('${user.uid}', '${user.email}')">Sil</button>` : 
-                                    '<span class="badge badge-admin">Sistem Kullanıcısı</span>'
+                                ${isSystemUser
+                                    ? `<span class="badge badge-user">${getRoleDisplayName(user.role)}</span>`
+                                    : `<select id="roleSelect_${user.uid}" class="role-select" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); min-width: 180px;">
+                                        ${renderRoleSelectOptions(user.role)}
+                                       </select>`
+                                }
+                            </td>
+                            <td>${user.createdAt ? new Date(user.createdAt).toLocaleString('tr-TR') : '-'}</td>
+                            <td>
+                                ${isSystemUser
+                                    ? '<span class="badge badge-admin">Sistem Kullanıcısı</span>'
+                                    : `<button class="action-btn btn-success" onclick="updateUserRole('${user.uid}')">Rolü Kaydet</button>
+                                       <button class="action-btn btn-danger" onclick="deleteUser('${user.uid}', '${user.email}')">Sil</button>`
                                 }
                             </td>
                         </tr>
@@ -3318,6 +3384,85 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 });
             });
         }
+
+        window.updateUserRole = async function(uid) {
+            const select = document.getElementById(`roleSelect_${uid}`);
+            if (!select) return;
+
+            const newRole = select.value;
+            if (!newRole) {
+                alert('Lütfen bir rol seçin!');
+                return;
+            }
+
+            try {
+                const userSnap = await dbGet(dbRef(db, `users/${uid}`));
+                if (!userSnap.exists()) {
+                    alert('Kullanıcı kaydı bulunamadı!');
+                    return;
+                }
+
+                const user = userSnap.val();
+                const email = (user.email || '').toLowerCase().trim();
+                await writeUserRoleRecords(email, newRole, uid, currentUser.email);
+                await addLog(currentUser.email, 'Kullanıcı Rolü Güncelledi', `E-posta: ${email}, Yeni Rol: ${newRole}`);
+                alert('Kullanıcı rolü güncellendi!');
+                loadUsers();
+            } catch (error) {
+                console.error('Rol güncelleme hatası:', error);
+                alert('Rol güncellenemedi: ' + error.message);
+            }
+        };
+
+        window.adminSkipKadirForInvoice = async function(event) {
+            event.preventDefault();
+
+            const customId = document.getElementById('itSkipKadirInvoiceId').value.trim();
+            const resultDiv = document.getElementById('itSkipKadirResult');
+
+            if (!customId) {
+                alert('Lütfen fatura ID girin!');
+                return;
+            }
+
+            try {
+                const invoice = await findInvoiceByCustomId(customId);
+                if (!invoice) {
+                    resultDiv.innerHTML = `<div class="alert alert-error">Fatura bulunamadı: ${customId}</div>`;
+                    return;
+                }
+
+                if (invoice.kadirApprovedBy) {
+                    resultDiv.innerHTML = `<div class="alert alert-error">Bu fatura zaten Kadir tarafından onaylanmış.</div>`;
+                    return;
+                }
+
+                if (normalizeStatus(invoice.status) === '1. Onay Bekliyor' && !invoice.requiresKadirApproval) {
+                    resultDiv.innerHTML = `<div class="alert alert-error">Bu fatura zaten 1. Onay Bekliyor durumunda.</div>`;
+                    return;
+                }
+
+                showConfirmModal(
+                    'Kadir Onayı Atlama',
+                    `Fatura ID: ${invoice.customId}\nFatura No: ${invoice.invoiceNumber}\nTutar: ${Number(invoice.amount || 0).toLocaleString('tr-TR')} ₺\nOluşturan: ${invoice.createdBy || '-'}\n\nKadir onayını atlayıp İbrahim onayına göndermek istiyor musunuz?`,
+                    async () => {
+                        await skipKadirApprovalForInvoice(invoice.id, invoice, currentUser.email, 'IT paneli');
+                        await addLog(
+                            currentUser.email,
+                            'IT: Kadir Onayı Atlandı',
+                            `Fatura ID: ${invoice.customId}, Fatura No: ${invoice.invoiceNumber}`
+                        );
+                        resultDiv.innerHTML = `<div class="alert alert-success" style="background:#dcfce7;color:#166534;padding:12px;border-radius:8px;">✅ ${invoice.customId} numaralı fatura 1. Onay Bekliyor durumuna alındı.</div>`;
+                        document.getElementById('itSkipKadirInvoiceId').value = '';
+                        loadAdminData();
+                        if (currentUserRole === 'kadir') loadKadirData();
+                    }
+                );
+            } catch (error) {
+                console.error('Kadir atlama hatası:', error);
+                resultDiv.innerHTML = `<div class="alert alert-error">İşlem başarısız: ${error.message}</div>`;
+            }
+        };
 
         window.deleteUser = async function(uid, email) {
             showConfirmModal(
@@ -3454,6 +3599,16 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 document.getElementById('loginBtnText').textContent = 'Giriş Yap';
             }
         });
+
+        const ASSIGNABLE_ROLES = [
+            'admin', 'selcuk', 'mehmet', 'magaza', 'kadir', 'ibrahim', 'magaza_muduru', 'mahmut', 'viewer'
+        ];
+
+        function renderRoleSelectOptions(selectedRole) {
+            return ASSIGNABLE_ROLES.map((role) =>
+                `<option value="${role}" ${role === selectedRole ? 'selected' : ''}>${getRoleDisplayName(role)}</option>`
+            ).join('');
+        }
 
         function getRoleDisplayName(role) {
             const roleNames = {
@@ -3827,8 +3982,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
             const successMessage = linkedTransactionId
                 ? (needsKadirApproval
-                    ? `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`
-                    : `✅ Fatura İbrahim onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi\n✓ İşlem-Fatura bağlantısı kuruldu`)
+                    ? `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi`
+                    : `✅ Fatura İbrahim onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}\n✓ İşlem ID ${finalInvoiceId} ile eşleştirildi`)
                 : (needsKadirApproval
                     ? `✅ Fatura Kadir onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}`
                     : `✅ Fatura İbrahim onayına gönderildi!\n\nFatura ID: ${finalInvoiceId}`);
