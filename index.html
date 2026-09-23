@@ -1683,7 +1683,7 @@
                 <!-- Kadir Dashboard -->
                 <div id="kadirDashboard" class="hidden">
                     <div class="alert alert-info" style="margin-bottom: 20px;">
-                        <strong>Ön Onay Paneli:</strong> Mehmet gibi kullanıcıların oluşturduğu faturalar burada onaylanır. İşlemler Kadir onayına düşmez; doğrudan İbrahim onayına gider. Kendi oluşturduklarınız burada görünmez; onlar doğrudan İbrahim onayına gider.
+                        <strong>Ön Onay Paneli:</strong> Mehmet ve Selçuk tarafından oluşturulan faturalar <strong>Bekleyen Faturalar</strong> sekmesinde görünür. İşlemler Kadir onayına düşmez; doğrudan İbrahim onayına gider. Kendi oluşturduğunuz faturalar burada listelenmez.
                     </div>
                     <div class="grid">
                         <div class="stat-card">
@@ -1705,13 +1705,13 @@
                     </div>
 
                     <div class="tabs">
-                        <button class="tab active" onclick="switchTab('kadirPendingTab')">Bekleyen İşlemler</button>
+                        <button class="tab" onclick="switchTab('kadirPendingTab')">Bekleyen İşlemler</button>
                         <button class="tab" onclick="switchTab('kadirApprovedTab')">Onayladığım İşlemler</button>
-                        <button class="tab" onclick="switchTab('kadirInvoicesPendingTab')">Bekleyen Faturalar</button>
+                        <button class="tab active" onclick="switchTab('kadirInvoicesPendingTab')">Bekleyen Faturalar</button>
                         <button class="tab" onclick="switchTab('kadirInvoicesApprovedTab')">Onayladığım Faturalar</button>
                     </div>
 
-                    <div id="kadirPendingTab" class="tab-content active">
+                    <div id="kadirPendingTab" class="tab-content">
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">Ön Onay Bekleyen İşlemler</h2>
@@ -1776,7 +1776,7 @@
                         </div>
                     </div>
 
-                    <div id="kadirInvoicesPendingTab" class="tab-content">
+                    <div id="kadirInvoicesPendingTab" class="tab-content active">
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">Ön Onay Bekleyen Faturalar</h2>
@@ -2419,6 +2419,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             'ibrahim@mobilfon.com': 'ibrahim',
             'ibrahim.duz@mobilfon.com': 'ibrahim',
             'kadir@mobilfon.com': 'kadir',
+            'kadir.celik@mobilfon.com': 'kadir',
             'samil@mobilfon.com': 'viewer',
             'cigdem@mobilfon.com': 'viewer',
             'cigdem2026@mobilfon.com': 'viewer'
@@ -2472,7 +2473,40 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             return (status || '').trim();
         }
 
+        function normalizeEmail(email) {
+            return (email || '').toLowerCase().trim();
+        }
+
+        const KADIR_CREATOR_EMAILS = ['kadir@mobilfon.com', 'kadir.celik@mobilfon.com'];
+
+        function isRecordFromKadirCreator(record) {
+            if ((record.createdByRole || '') === 'kadir') return true;
+            return KADIR_CREATOR_EMAILS.includes(normalizeEmail(record.createdBy));
+        }
+
+        function isKadirPendingInvoice(invoice) {
+            if (invoice.kadirApprovedBy) return false;
+            if (isRecordFromKadirCreator(invoice)) return false;
+
+            const status = normalizeStatus(invoice.status);
+            if (status === 'Kadir Onayı Bekliyor') return true;
+            if (invoice.requiresKadirApproval === true && Number(invoice.approvalStage ?? 0) < 1 && status !== 'Reddedildi') {
+                return true;
+            }
+            return false;
+        }
+
+        function isKadirPendingTransaction(transaction) {
+            if (transaction.kadirApprovedBy) return false;
+            if (isRecordFromKadirCreator(transaction)) return false;
+            if (transaction.requiresKadirApproval === false) return false;
+
+            const status = normalizeStatus(transaction.status);
+            return status === 'Kadir Onayı Bekliyor';
+        }
+
         function isIbrahimPendingInvoice(invoice) {
+            if (isKadirPendingInvoice(invoice)) return false;
             return normalizeStatus(invoice.status) === '1. Onay Bekliyor';
         }
 
@@ -2547,6 +2581,38 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
         }
 
+        async function repairInvoicesStuckKadirQueue() {
+            const invoicesRef = dbRef(db, 'invoices');
+            const snapshot = await dbGet(invoicesRef);
+            const repairs = [];
+
+            if (snapshot.exists()) {
+                snapshot.forEach((child) => {
+                    const invoice = child.val();
+                    if (invoice.kadirApprovedBy || isRecordFromKadirCreator(invoice)) return;
+
+                    const status = normalizeStatus(invoice.status);
+                    const shouldBeInKadirQueue = invoice.requiresKadirApproval === true
+                        || status === 'Kadir Onayı Bekliyor';
+
+                    if (!shouldBeInKadirQueue) return;
+
+                    if (status !== 'Kadir Onayı Bekliyor') {
+                        repairs.push(dbUpdate(dbRef(db, `invoices/${child.key}`), {
+                            status: 'Kadir Onayı Bekliyor',
+                            approvalStage: 0,
+                            requiresKadirApproval: true,
+                            firstApproverRole: 'ibrahim'
+                        }));
+                    }
+                });
+            }
+
+            if (repairs.length) {
+                await Promise.all(repairs);
+            }
+        }
+
         function canReachIbrahimApproval(record) {
             const approverRole = record.firstApproverRole || 'ibrahim';
             if (approverRole !== 'ibrahim') return true;
@@ -2560,7 +2626,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                 const date = record.kadirApprovedAt ? new Date(record.kadirApprovedAt).toLocaleString('tr-TR') : '';
                 return `<span class="badge badge-approved" title="${date}">✓ Kadir Onayladı</span><br><small style="color:#6b7280;">${date}</small>`;
             }
-            if (record.status === 'Kadir Onayı Bekliyor') {
+            if (normalizeStatus(record.status) === 'Kadir Onayı Bekliyor' || (record.requiresKadirApproval === true && !record.kadirApprovedBy)) {
                 return '<span class="badge badge-pending">Kadir Onayı Bekliyor</span>';
             }
             return '<span style="color:#9ca3af;">-</span>';
@@ -3397,9 +3463,11 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             document.getElementById('kadirDashboard').classList.remove('hidden');
             updateCreatorPanelForRole('kadir');
             resetDashboardTabs('mehmetDashboard', 'createTransaction');
-            resetDashboardTabs('kadirDashboard', 'kadirPendingTab');
+            resetDashboardTabs('kadirDashboard', 'kadirInvoicesPendingTab');
             loadMehmetData();
-            loadKadirData();
+            repairInvoicesStuckKadirQueue()
+                .catch((error) => console.error('Kadir fatura kuyruğu onarım hatası:', error))
+                .finally(() => loadKadirData());
             loadStatusOptions();
             loadServiceTypes();
             break;
@@ -4212,11 +4280,8 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
 
                 snapshot.forEach((child) => {
                     const transaction = { id: child.key, ...child.val() };
-                    const transactionApproverRole = transaction.firstApproverRole || 'ibrahim';
 
-                    if (transaction.status === 'Kadir Onayı Bekliyor'
-                        && transactionApproverRole === 'ibrahim'
-                        && transaction.createdBy !== currentUser.email) {
+                    if (isKadirPendingTransaction(transaction)) {
                         pendingTransactions.push(transaction);
                     } else if (transaction.kadirApprovedBy) {
                         approvedTransactions.push(transaction);
@@ -4286,7 +4351,7 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 snapshot.forEach((child) => {
                     const invoice = { id: child.key, ...child.val() };
 
-                    if (invoice.status === 'Kadir Onayı Bekliyor' && invoice.createdBy !== currentUser.email) {
+                    if (isKadirPendingInvoice(invoice)) {
                         pendingInvoices.push(invoice);
                     } else if (invoice.kadirApprovedBy) {
                         approvedInvoices.push(invoice);
