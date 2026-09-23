@@ -246,6 +246,56 @@
             max-width: 100%;
         }
 
+        .dashboard.kadir-layout {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard.kadir-layout #kadirDashboard {
+            order: -1;
+        }
+
+        .kadir-approval-banner {
+            background: var(--gradient-brand);
+            color: white;
+            padding: 20px 24px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .kadir-approval-banner h2 {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        .kadir-approval-banner p {
+            opacity: 0.92;
+            font-size: 14px;
+        }
+
+        .kadir-approval-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .kadir-approval-actions .btn {
+            background: rgba(255, 255, 255, 0.18);
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            color: white;
+        }
+
+        .kadir-approval-actions .btn:hover {
+            background: white;
+            color: var(--primary-dark);
+        }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1682,8 +1732,15 @@
 
                 <!-- Kadir Dashboard -->
                 <div id="kadirDashboard" class="hidden">
-                    <div class="alert alert-info" style="margin-bottom: 20px;">
-                        <strong>Ön Onay Paneli:</strong> Mehmet ve Selçuk tarafından oluşturulan faturalar <strong>Bekleyen Faturalar</strong> sekmesinde görünür. İşlemler Kadir onayına düşmez; doğrudan İbrahim onayına gider. Kendi oluşturduğunuz faturalar burada listelenmez.
+                    <div class="kadir-approval-banner">
+                        <div>
+                            <h2>Onay Bekleyen Faturalar</h2>
+                            <p>Mehmet ve Selçuk tarafından oluşturulan faturaları buradan onaylayın.</p>
+                        </div>
+                        <div class="kadir-approval-actions">
+                            <button type="button" class="btn" onclick="switchTab('kadirInvoicesPendingTab')">Onay Kuyruğu</button>
+                            <button type="button" class="btn" onclick="toggleKadirCreatorPanel()">Kayıt Oluştur</button>
+                        </div>
                     </div>
                     <div class="grid">
                         <div class="stat-card">
@@ -2489,11 +2546,81 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             if (isRecordFromKadirCreator(invoice)) return false;
 
             const status = normalizeStatus(invoice.status);
+            const creatorRole = invoice.createdByRole || '';
+            const needsKadirByRole = ['mehmet', 'selcuk'].includes(creatorRole);
+
             if (status === 'Kadir Onayı Bekliyor') return true;
+            if (needsKadirByRole && Number(invoice.approvalStage ?? 0) < 1 && !['Reddedildi', 'Onaylandı', '2. Onay Bekliyor', 'Tamamlandı'].includes(status)) {
+                return true;
+            }
             if (invoice.requiresKadirApproval === true && Number(invoice.approvalStage ?? 0) < 1 && status !== 'Reddedildi') {
                 return true;
             }
             return false;
+        }
+
+        function buildKadirQueueRecord(invoiceId, invoice) {
+            return {
+                invoiceId: invoiceId,
+                customId: invoice.customId,
+                invoiceNumber: invoice.invoiceNumber,
+                invoiceDate: invoice.invoiceDate,
+                amount: invoice.amount,
+                company: invoice.company,
+                note: invoice.note || '',
+                dueDate: invoice.dueDate || '',
+                status: invoice.status || 'Kadir Onayı Bekliyor',
+                createdBy: invoice.createdBy,
+                createdByRole: invoice.createdByRole || '',
+                timestamp: invoice.timestamp || Date.now(),
+                linkedTransactionId: invoice.linkedTransactionId || null,
+                linkedTransactionCustomId: invoice.linkedTransactionCustomId || null
+            };
+        }
+
+        async function addToKadirQueue(invoiceId, invoice) {
+            await dbSet(dbRef(db, `kadirQueue/invoices/${invoiceId}`), buildKadirQueueRecord(invoiceId, invoice));
+        }
+
+        async function removeFromKadirQueue(invoiceId) {
+            await dbRemove(dbRef(db, `kadirQueue/invoices/${invoiceId}`));
+        }
+
+        async function repairKadirQueueFromInvoices() {
+            try {
+                const [invoicesSnap, queueSnap] = await Promise.all([
+                    dbGet(dbRef(db, 'invoices')),
+                    dbGet(dbRef(db, 'kadirQueue/invoices'))
+                ]);
+
+                const queueKeys = new Set();
+                if (queueSnap.exists()) {
+                    queueSnap.forEach((child) => queueKeys.add(child.key));
+                }
+
+                const writes = [];
+                if (invoicesSnap.exists()) {
+                    invoicesSnap.forEach((child) => {
+                        const invoice = { id: child.key, ...child.val() };
+                        const shouldQueue = isKadirPendingInvoice(invoice);
+                        const inQueue = queueKeys.has(child.key);
+
+                        if (shouldQueue && !inQueue) {
+                            writes.push(addToKadirQueue(child.key, invoice));
+                        } else if (!shouldQueue && inQueue) {
+                            writes.push(removeFromKadirQueue(child.key));
+                        } else if (shouldQueue && inQueue) {
+                            writes.push(addToKadirQueue(child.key, invoice));
+                        }
+                    });
+                }
+
+                if (writes.length) {
+                    await Promise.all(writes);
+                }
+            } catch (error) {
+                console.warn('Kadir onay kuyruğu senkronizasyonu yapılamadı:', error);
+            }
         }
 
         function isKadirPendingTransaction(transaction) {
@@ -2611,6 +2738,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             if (repairs.length) {
                 await Promise.all(repairs);
             }
+
+            await repairKadirQueueFromInvoices();
         }
 
         function canReachIbrahimApproval(record) {
@@ -3394,6 +3523,20 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
         }
 
+        window.toggleKadirCreatorPanel = function() {
+            const creatorPanel = document.getElementById('mehmetDashboard');
+            if (!creatorPanel) return;
+            const willShow = creatorPanel.classList.contains('hidden');
+            creatorPanel.classList.toggle('hidden', !willShow);
+            if (willShow) {
+                resetDashboardTabs('mehmetDashboard', 'createTransaction');
+                loadMehmetData();
+                creatorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                document.getElementById('kadirDashboard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+
         function reloadCreatorData() {
             if (currentUserRole === 'kadir' || currentUserRole === 'mehmet' || currentUserRole === 'magaza') {
                 loadMehmetData();
@@ -3403,6 +3546,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         }
 
        function showDashboard(role) {
+    document.getElementById('dashboard').classList.remove('kadir-layout');
     ['adminDashboard', 'selcukDashboard', 'mehmetDashboard', 'mahmutDashboard', 'kadirDashboard', 'ibrahimDashboard', 'viewerDashboard'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
     });
@@ -3425,12 +3569,14 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
     switch(role) {
         case 'admin':
             document.getElementById('adminDashboard').classList.remove('hidden');
-            loadAdminData();
-            loadUsers();
+            repairKadirQueueFromInvoices().finally(() => {
+                loadAdminData();
+                loadUsers();
+            });
             break;
         case 'selcuk':
             document.getElementById('selcukDashboard').classList.remove('hidden');
-            loadSelcukData();
+            repairKadirQueueFromInvoices().finally(() => loadSelcukData());
             break;
         case 'mehmet':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
@@ -3438,7 +3584,8 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             syncInvoiceTransactionLinks()
                 .catch((error) => console.error('Bağlantı senkronizasyon hatası:', error))
                 .finally(() => {
-                    repairStuckTransactionKadirQueue().finally(() => loadMehmetData());
+                    repairStuckTransactionKadirQueue()
+                        .finally(() => repairKadirQueueFromInvoices().finally(() => loadMehmetData()));
                 });
             loadStatusOptions();
             loadServiceTypes();
@@ -3459,15 +3606,17 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             loadMahmutData();
             break;
         case 'kadir':
-            document.getElementById('mehmetDashboard').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('kadir-layout');
             document.getElementById('kadirDashboard').classList.remove('hidden');
+            document.getElementById('mehmetDashboard').classList.add('hidden');
             updateCreatorPanelForRole('kadir');
-            resetDashboardTabs('mehmetDashboard', 'createTransaction');
             resetDashboardTabs('kadirDashboard', 'kadirInvoicesPendingTab');
-            loadMehmetData();
             repairInvoicesStuckKadirQueue()
                 .catch((error) => console.error('Kadir fatura kuyruğu onarım hatası:', error))
-                .finally(() => loadKadirData());
+                .finally(() => {
+                    loadKadirData();
+                    loadMehmetData();
+                });
             loadStatusOptions();
             loadServiceTypes();
             break;
@@ -3537,6 +3686,10 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             const invoicesRef = dbRef(db, 'invoices');
             const newInvoiceRef = dbPush(invoicesRef);
             await dbSet(newInvoiceRef, invoiceData);
+
+            if (needsKadirApproval) {
+                await addToKadirQueue(newInvoiceRef.key, invoiceData);
+            }
             
             await addLog(currentUser.email, 'Fatura Oluşturdu', `ID: ${sixDigitId}, Fatura No: ${invoiceData.invoiceNumber}`);
             
@@ -3639,6 +3792,10 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             const invoicesRef = dbRef(db, 'invoices');
             const newInvoiceRef = dbPush(invoicesRef);
             await dbSet(newInvoiceRef, invoiceData);
+
+            if (needsKadirApproval) {
+                await addToKadirQueue(newInvoiceRef.key, invoiceData);
+            }
             
             const logMessage = linkedTransactionId 
                 ? `ID: ${finalInvoiceId}, Fatura No: ${invoiceData.invoiceNumber} (İşlem ${finalInvoiceId} ile eşleştirildi)`
@@ -3767,8 +3924,28 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
 
         window.approveKadirInvoice = async function(invoiceId) {
             const invoiceRef = dbRef(db, `invoices/${invoiceId}`);
-            const snapshot = await dbGet(invoiceRef);
-            const invoice = snapshot.val();
+            let invoice = null;
+
+            try {
+                const snapshot = await dbGet(invoiceRef);
+                if (snapshot.exists()) invoice = snapshot.val();
+            } catch (error) {
+                console.warn('Fatura kaydı okunamadı, kuyruk kaydı denenecek:', error);
+            }
+
+            if (!invoice) {
+                try {
+                    const queueSnap = await dbGet(dbRef(db, `kadirQueue/invoices/${invoiceId}`));
+                    if (queueSnap.exists()) invoice = queueSnap.val();
+                } catch (error) {
+                    console.warn('Kadir kuyruk kaydı okunamadı:', error);
+                }
+            }
+
+            if (!invoice) {
+                alert('Fatura bulunamadı veya okuma yetkiniz yok. Lütfen yönetici ile iletişime geçin.');
+                return;
+            }
 
             showConfirmModal(
                 'Kadir Onayı - Fatura',
@@ -3783,6 +3960,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
                         requiresKadirApproval: false,
                         readyForIbrahimApproval: true
                     });
+                    await removeFromKadirQueue(invoiceId);
 
                     await addLog(currentUser.email, 'Kadir Onayladı (Fatura)', `ID: ${invoice.customId}`);
                     await sendEmailNotification(
@@ -3944,6 +4122,9 @@ await sendEmailNotification(
                 async () => {
                     const recordRef = dbRef(db, `${type}/${id}`);
                     await dbRemove(recordRef);
+                    if (type === 'invoices') {
+                        try { await removeFromKadirQueue(id); } catch (e) { /* ignore */ }
+                    }
                     await addLog(currentUser.email, `${type} Sildi`, `ID: ${id}`);
                     alert('Kayıt silindi!');
                     
@@ -4344,47 +4525,85 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                 });
             });
 
-            dbOnValue(invoicesRef, (snapshot) => {
-                const pendingInvoices = [];
-                const approvedInvoices = [];
-
-                snapshot.forEach((child) => {
-                    const invoice = { id: child.key, ...child.val() };
-
-                    if (isKadirPendingInvoice(invoice)) {
-                        pendingInvoices.push(invoice);
-                    } else if (invoice.kadirApprovedBy) {
-                        approvedInvoices.push(invoice);
-                    }
-                });
-
+            function renderKadirPendingInvoices(pendingInvoices) {
                 document.getElementById('kadirPendingInvoices').textContent = pendingInvoices.length;
-                document.getElementById('kadirApprovedInvoices').textContent = approvedInvoices.length;
 
                 const pendingInvoicesTbody = document.querySelector('#kadirInvoicesPendingTable tbody');
+                if (!pendingInvoicesTbody) return;
                 pendingInvoicesTbody.innerHTML = '';
-                pendingInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
-                    const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, {}, {}, []);
+
+                if (!pendingInvoices.length) {
+                    pendingInvoicesTbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" style="text-align:center; color: var(--muted); padding: 28px;">
+                                Şu an onay bekleyen fatura yok.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                pendingInvoices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).forEach(invoice => {
+                    const invoiceId = invoice.invoiceId || invoice.id;
+                    const linkedBadge = invoice.linkedTransactionId || invoice.linkedTransactionCustomId
+                        ? '<span class="linked-indicator linked-ok">🔗 İşlem Bağlantılı</span>'
+                        : '';
                     pendingInvoicesTbody.innerHTML += `
                         <tr>
-                            <td><strong>${invoice.customId || invoice.id.substring(0, 6)}</strong>${linkedBadge}</td>
-                            <td>${invoice.invoiceNumber}</td>
-                            <td>${new Date(invoice.invoiceDate).toLocaleDateString('tr-TR')}</td>
-                            <td>${invoice.amount.toLocaleString('tr-TR')} ₺</td>
-                            <td>${invoice.company}</td>
+                            <td><strong>${invoice.customId || invoiceId.substring(0, 6)}</strong>${linkedBadge}</td>
+                            <td>${invoice.invoiceNumber || '-'}</td>
+                            <td>${invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString('tr-TR') : '-'}</td>
+                            <td>${Number(invoice.amount || 0).toLocaleString('tr-TR')} ₺</td>
+                            <td>${invoice.company || '-'}</td>
                             <td>${invoice.note || '-'}</td>
                             <td>${invoice.dueDate || '-'}</td>
-                            <td>${invoice.createdBy}</td>
-                            <td><span class="badge ${getStatusBadge(invoice.status)}">${invoice.status}</span></td>
+                            <td>${invoice.createdBy || '-'}</td>
+                            <td><span class="badge ${getStatusBadge(invoice.status || 'Kadir Onayı Bekliyor')}">${invoice.status || 'Kadir Onayı Bekliyor'}</span></td>
                             <td>
-                                <button class="action-btn btn-success" onclick="approveKadirInvoice('${invoice.id}')">Onayladım</button>
+                                <button class="action-btn btn-success" onclick="approveKadirInvoice('${invoiceId}')">Onayladım</button>
                             </td>
                         </tr>
                     `;
                 });
+            }
+
+            dbOnValue(dbRef(db, 'kadirQueue/invoices'), (queueSnapshot) => {
+                const pendingInvoices = [];
+                queueSnapshot.forEach((child) => {
+                    pendingInvoices.push({ id: child.key, invoiceId: child.key, ...child.val() });
+                });
+                renderKadirPendingInvoices(pendingInvoices);
+            }, (error) => {
+                console.error('Kadir onay kuyruğu okunamadı:', error);
+            });
+
+            dbOnValue(invoicesRef, (snapshot) => {
+                const approvedInvoices = [];
+
+                snapshot.forEach((child) => {
+                    const invoice = { id: child.key, ...child.val() };
+                    if (invoice.kadirApprovedBy) {
+                        approvedInvoices.push(invoice);
+                    }
+                });
+
+                document.getElementById('kadirApprovedInvoices').textContent = approvedInvoices.length;
 
                 const approvedInvoicesTbody = document.querySelector('#kadirInvoicesApprovedTable tbody');
+                if (!approvedInvoicesTbody) return;
                 approvedInvoicesTbody.innerHTML = '';
+
+                if (!approvedInvoices.length) {
+                    approvedInvoicesTbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" style="text-align:center; color: var(--muted); padding: 28px;">
+                                Henüz onayladığınız fatura yok.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
                 approvedInvoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                     const linkedBadge = formatInvoiceTransactionLinkBadge(invoice, {}, {}, []);
                     const approvalDate = invoice.kadirApprovedAt ? new Date(invoice.kadirApprovedAt).toLocaleString('tr-TR') : '-';
@@ -4403,6 +4622,8 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
                         </tr>
                     `;
                 });
+            }, (error) => {
+                console.error('Kadir onaylanan fatura listesi okunamadı:', error);
             });
         }
 
