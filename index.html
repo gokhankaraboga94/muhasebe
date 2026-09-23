@@ -1488,11 +1488,78 @@
 
                 <!-- Mehmet Dashboard - Güncellenmiş -->
                 <div id="mehmetDashboard" class="hidden">
-                    <div class="tabs">
-                        <button class="tab active" onclick="switchTab('createTransaction')">İşlem Oluştur</button>
-                        <button class="tab" onclick="switchTab('myTransactions')">İşlemlerim</button>
-                        <button class="tab" id="mehmetInvoiceCreateTabBtn" onclick="switchTab('mehmetCreateInvoice')">Fatura Oluştur</button>
-                        <button class="tab" id="mehmetInvoiceListTabBtn" onclick="switchTab('mehmetMyInvoices')">Faturalarım</button>
+                    <div id="kadirStatsBar" class="grid hidden" style="margin-bottom: 20px;">
+                        <div class="stat-card">
+                            <div class="stat-number" id="kadirPendingInvoices">0</div>
+                            <div class="stat-label">Bekleyen Onay</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="kadirApprovedInvoices">0</div>
+                            <div class="stat-label">Onayladığım</div>
+                        </div>
+                    </div>
+
+                    <div class="tabs" id="mehmetMainTabs">
+                        <button type="button" class="tab kadir-only-tab hidden" id="kadirPendingApprovalsTabBtn" onclick="switchTab('kadirInvoicesPendingTab')">Bekleyen Onaylar</button>
+                        <button type="button" class="tab kadir-only-tab hidden" id="kadirApprovedApprovalsTabBtn" onclick="switchTab('kadirInvoicesApprovedTab')">Onayladıklarım</button>
+                        <button type="button" class="tab creator-tab active" id="createTransactionTabBtn" onclick="switchTab('createTransaction')">İşlem Oluştur</button>
+                        <button type="button" class="tab creator-tab" onclick="switchTab('myTransactions')">İşlemlerim</button>
+                        <button type="button" class="tab creator-tab" id="mehmetInvoiceCreateTabBtn" onclick="switchTab('mehmetCreateInvoice')">Fatura Oluştur</button>
+                        <button type="button" class="tab creator-tab" id="mehmetInvoiceListTabBtn" onclick="switchTab('mehmetMyInvoices')">Faturalarım</button>
+                    </div>
+
+                    <div id="kadirInvoicesPendingTab" class="tab-content kadir-only-content hidden">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Ön Onay Bekleyen Faturalar</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="kadirInvoicesPendingTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Fatura Tarihi</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Not</th>
+                                            <th>Vade</th>
+                                            <th>Oluşturan</th>
+                                            <th>Durum</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="kadirInvoicesApprovedTab" class="tab-content kadir-only-content hidden">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Onayladığım Faturalar</h2>
+                            </div>
+                            <div class="table-container">
+                                <table id="kadirInvoicesApprovedTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Fatura No</th>
+                                            <th>Fatura Tarihi</th>
+                                            <th>Tutar</th>
+                                            <th>Firma</th>
+                                            <th>Not</th>
+                                            <th>Vade</th>
+                                            <th>Oluşturan</th>
+                                            <th>Durum</th>
+                                            <th>Onay Tarihi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="createTransaction" class="tab-content active">
@@ -1730,18 +1797,8 @@
                     </div>
                 </div>
 
-                <!-- Kadir Dashboard -->
+                <!-- Kadir Dashboard (legacy transaction tables) -->
                 <div id="kadirDashboard" class="hidden">
-                    <div class="kadir-approval-banner">
-                        <div>
-                            <h2>Onay Bekleyen Faturalar</h2>
-                            <p>Mehmet ve Selçuk tarafından oluşturulan faturaları buradan onaylayın.</p>
-                        </div>
-                        <div class="kadir-approval-actions">
-                            <button type="button" class="btn" onclick="switchTab('kadirInvoicesPendingTab')">Onay Kuyruğu</button>
-                            <button type="button" class="btn" onclick="toggleKadirCreatorPanel()">Kayıt Oluştur</button>
-                        </div>
-                    </div>
                     <div class="grid">
                         <div class="stat-card">
                             <div class="stat-number" id="kadirPending">0</div>
@@ -1751,21 +1808,11 @@
                             <div class="stat-number" id="kadirApproved">0</div>
                             <div class="stat-label">Onayladığım İşlem</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="kadirPendingInvoices">0</div>
-                            <div class="stat-label">Bekleyen Fatura</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="kadirApprovedInvoices">0</div>
-                            <div class="stat-label">Onayladığım Fatura</div>
-                        </div>
                     </div>
 
                     <div class="tabs">
                         <button class="tab" onclick="switchTab('kadirPendingTab')">Bekleyen İşlemler</button>
                         <button class="tab" onclick="switchTab('kadirApprovedTab')">Onayladığım İşlemler</button>
-                        <button class="tab active" onclick="switchTab('kadirInvoicesPendingTab')">Bekleyen Faturalar</button>
-                        <button class="tab" onclick="switchTab('kadirInvoicesApprovedTab')">Onayladığım Faturalar</button>
                     </div>
 
                     <div id="kadirPendingTab" class="tab-content">
@@ -1822,60 +1869,6 @@
                                             <th>Ödeme</th>
                                             <th>Ödeme Tarihi</th>
                                             <th>Not/Maliyet</th>
-                                            <th>Oluşturan</th>
-                                            <th>Durum</th>
-                                            <th>Onay Tarihi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="kadirInvoicesPendingTab" class="tab-content active">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Ön Onay Bekleyen Faturalar</h2>
-                            </div>
-                            <div class="table-container">
-                                <table id="kadirInvoicesPendingTable">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Fatura No</th>
-                                            <th>Fatura Tarihi</th>
-                                            <th>Tutar</th>
-                                            <th>Firma</th>
-                                            <th>Not</th>
-                                            <th>Vade</th>
-                                            <th>Oluşturan</th>
-                                            <th>Durum</th>
-                                            <th>İşlemler</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="kadirInvoicesApprovedTab" class="tab-content">
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Onayladığım Faturalar</h2>
-                            </div>
-                            <div class="table-container">
-                                <table id="kadirInvoicesApprovedTable">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Fatura No</th>
-                                            <th>Fatura Tarihi</th>
-                                            <th>Tutar</th>
-                                            <th>Firma</th>
-                                            <th>Not</th>
-                                            <th>Vade</th>
                                             <th>Oluşturan</th>
                                             <th>Durum</th>
                                             <th>Onay Tarihi</th>
@@ -3127,6 +3120,14 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
         }
 
+        function normalizeUserRole(role, email) {
+            const normalizedEmail = normalizeEmail(email);
+            if (KADIR_CREATOR_EMAILS.includes(normalizedEmail) || defaultUserRoles[normalizedEmail] === 'kadir') {
+                return 'kadir';
+            }
+            return role;
+        }
+
         async function getUserRole(email, uid) {
             const normalizedEmail = (email || '').toLowerCase().trim();
             const resolvedUid = uid || auth.currentUser?.uid;
@@ -3415,7 +3416,7 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                currentUserRole = await getUserRole(user.email, user.uid);
+                currentUserRole = normalizeUserRole(await getUserRole(user.email, user.uid), user.email);
 
                 if (!currentUserRole) {
                     document.body.classList.remove('app-dashboard');
@@ -3523,19 +3524,25 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             }
         }
 
-        window.toggleKadirCreatorPanel = function() {
-            const creatorPanel = document.getElementById('mehmetDashboard');
-            if (!creatorPanel) return;
-            const willShow = creatorPanel.classList.contains('hidden');
-            creatorPanel.classList.toggle('hidden', !willShow);
-            if (willShow) {
-                resetDashboardTabs('mehmetDashboard', 'createTransaction');
-                loadMehmetData();
-                creatorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-                document.getElementById('kadirDashboard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        };
+        function configureKadirTabBar(isKadir) {
+            document.querySelectorAll('.kadir-only-tab').forEach((tab) => {
+                tab.classList.toggle('hidden', !isKadir);
+            });
+            document.querySelectorAll('.kadir-only-content').forEach((content) => {
+                if (!isKadir) {
+                    content.classList.remove('active');
+                    content.classList.add('hidden');
+                } else {
+                    content.classList.remove('hidden');
+                }
+            });
+
+            const statsBar = document.getElementById('kadirStatsBar');
+            if (statsBar) statsBar.classList.toggle('hidden', !isKadir);
+
+            const creatorTabs = document.querySelectorAll('#mehmetMainTabs .creator-tab');
+            creatorTabs.forEach((tab) => tab.classList.toggle('hidden', false));
+        }
 
         function reloadCreatorData() {
             if (currentUserRole === 'kadir' || currentUserRole === 'mehmet' || currentUserRole === 'magaza') {
@@ -3580,7 +3587,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             break;
         case 'mehmet':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
+            configureKadirTabBar(false);
             updateCreatorPanelForRole('mehmet');
+            resetDashboardTabs('mehmetDashboard', 'createTransaction');
             syncInvoiceTransactionLinks()
                 .catch((error) => console.error('Bağlantı senkronizasyon hatası:', error))
                 .finally(() => {
@@ -3592,7 +3601,9 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             break;
         case 'magaza':
             document.getElementById('mehmetDashboard').classList.remove('hidden');
+            configureKadirTabBar(false);
             updateCreatorPanelForRole('magaza');
+            resetDashboardTabs('mehmetDashboard', 'createTransaction');
             if (mehmetInvoiceCreateBtn) mehmetInvoiceCreateBtn.classList.add('hidden');
             if (mehmetInvoiceListBtn) mehmetInvoiceListBtn.classList.add('hidden');
             if (mehmetInvoiceCreateSection) mehmetInvoiceCreateSection.classList.add('hidden');
@@ -3606,11 +3617,10 @@ async function sendEmailNotification(toRole, subject, detailMsg) {
             loadMahmutData();
             break;
         case 'kadir':
-            document.getElementById('dashboard').classList.add('kadir-layout');
-            document.getElementById('kadirDashboard').classList.remove('hidden');
-            document.getElementById('mehmetDashboard').classList.add('hidden');
+            document.getElementById('mehmetDashboard').classList.remove('hidden');
+            configureKadirTabBar(true);
             updateCreatorPanelForRole('kadir');
-            resetDashboardTabs('kadirDashboard', 'kadirInvoicesPendingTab');
+            resetDashboardTabs('mehmetDashboard', 'kadirInvoicesPendingTab');
             repairInvoicesStuckKadirQueue()
                 .catch((error) => console.error('Kadir fatura kuyruğu onarım hatası:', error))
                 .finally(() => {
@@ -5437,6 +5447,13 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             }
             if (btn) btn.classList.add('active');
 
+            dashboardRoot.querySelectorAll('.tab-content').forEach(content => {
+                if (content !== tabContent) {
+                    content.classList.remove('active');
+                    content.classList.add('hidden');
+                }
+            });
+
             tabContent.classList.remove('hidden');
             tabContent.classList.add('active');
 
@@ -5460,7 +5477,12 @@ invoices.sort((a, b) => b.timestamp - a.timestamp).forEach(invoice => {
             if (!dashboardRoot) return;
 
             dashboardRoot.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            dashboardRoot.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            dashboardRoot.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+                if (content.id !== defaultTabId) {
+                    content.classList.add('hidden');
+                }
+            });
 
             const defaultTab = document.getElementById(defaultTabId);
             if (defaultTab) {
